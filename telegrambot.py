@@ -89,16 +89,31 @@ def save_cache(appeared):
                     button_bar = types.InlineKeyboardButton('Показать описание', callback_data='{}'.format(ad['url']))
                     keyboard = types.InlineKeyboardMarkup()
                     keyboard.add(button_bar)
-                    bot.send_message(chat_id, f"Актуально на {time_}\n"
-                                        f"{ad['title']}"
-                                        f"\n"
-                                        f"🚇Метро: {ad['underground']} {ad['metro_dist']}\n"
-                                        f"🧍‍♂️Автор: {ad['author_type']}\n"
-                                        f"💸Цена: {ad['price_per_month']}₽\n"
-                                        f"🏘Район: {ad['district']}\n"
-                                        f"🛏Количество комнат: {ad.get('rooms_count', 'не указано')}\n"
-                                        f"🔗Источник: {ad['url']}\n"
-                                        f"Изображение: {ad['image0']}", reply_markup=keyboard)
+                    msg = f"""Актуально на {time_}\n"
+                                        "{ad['title']}"
+                                        "🚇Метро: {ad['underground']} {ad['metro_dist']}\n"
+                                        "🧍‍♂️Автор: {ad['author_type']}\n"
+                                        "💸Цена: {ad['price_per_month']}₽\n"
+                                        "🏘Район: {ad['district']}\n"
+                                        "🛏Количество комнат: {ad.get('rooms_count', 'не указано')}\n"
+                                        "🔗Источник: {ad['url']}\n"
+                                        """
+                    if 'addon' in ad:
+                        for i in ad['addon'][0]:
+                            try:
+                                import pdb; pdb.set_trace()
+                                if "параметры проживающих" in i:
+                                    for j in ad['addon'][0][i]:
+                                        for d in ad['addon'][0][i][j]:
+                                            if "не указано" not in d:
+                                                
+                                                msg.append({f"Жилец {j}": ",".join(str(element) for element in ad['addon'][0][i][j])})
+                                if "не указано" not in str(ad['addon'][0][i]):
+                                    msg.append(f"{i}: {ad['addon'][0][i]}\n")
+                            except Exception as e:
+                                print(e)
+    
+                    bot.send_message(chat_id, msg, reply_markup=keyboard)
                 bot.send_message(chat_id, text='Появилось {} новых объявления по вашему запросу, чтобы поменять параметры воспользуйтесь командой /start\n'    
                                  "@KvartiraDar - канал про обновления".format(str(len(new_filtered_ads))))
             except:

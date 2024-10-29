@@ -18,7 +18,9 @@ import cianparser
 from cianparser.constants import CITIES
 import re
 import copy
-
+import ai
+from ai import data as dt
+from ai import chain_prompt
 class Sent(Exception): pass
 def offer_list_updated(offer_list ,disappeared, appeared):
    
@@ -171,7 +173,8 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
                         image_data = get_image_data(offer)
                     except:
                         image_data = {'image0':" "}
-                    offer_list = offer_list + [union_dicts(author_data, specification_data, price_data, location_data, common_data, image_data)]
+
+                    offer_list = offer_list + [union_dicts(author_data, specification_data, price_data, location_data, common_data, image_data, addon=[])]
                     url_list.append((offer.select("div[data-name='LinkArea']")[0].select("a")[0].get('href')))
         old = load_old()
         if str(i) in old:
@@ -183,7 +186,7 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
         break_flag = False
         print(datetime.now())
         if len(offer_list) > 0:
-            if any(d['url'] == offer_list[-1]['url'] for d in old[str(i)]):  
+            if any(d['url'] == offer_list[-1]['url'] for d in old[str(i)]) or any(d['url'] == offer_list[-15]['url'] for d in old[str(i)]):  
                 flag1 = False  
                 while True:
                     if(break_flag):
@@ -198,7 +201,13 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
                                 break
                         ##else:
                          #   break_flag = True
-                        
+        if no_room:               
+            import pdb; pdb.set_trace()
+            for filtered_offer in offer_list:
+                
+                addon = chain_prompt(data=dt, desc=filtered_offer["description"])
+                filtered_offer["addon"] = addon
+            
         print(datetime.now())
         page += 1
         url_list = list(dict.fromkeys(url_list))
@@ -271,6 +280,7 @@ while True:
    # try:
     then = datetime.now()
     parse(2,10,room1=1,room2=1, no_room=True)    
+    parse(2,10,room1=1,room2=1, no_room=False)    
     parse(5,25,room1=1,room2=1)
     print(datetime.now() - then )
    ## except:
