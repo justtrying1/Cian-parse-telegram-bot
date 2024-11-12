@@ -1,30 +1,34 @@
-
-API_TOKEN = '7006315291:AAE_Nb6L-pNyVi5tFylMycjZnkAYrkkzyYs'  # Замените на ваш токен
-JSON_FILE_PATH = '&rent&30000&40000&1 room&Москва&2024-09-30 22-40-46.json'
-import telebot
+from telegrambot import parse_addon
 import json
-import time
-import os
-import re
-import datetime
-from datetime import timedelta
-from datetime import datetime
-from copy import deepcopy
-from telebot import types
-
-#API_TOKEN = 'YOUR_API_TOKEN'  # Замените на ваш токен
-bot = telebot.TeleBot(API_TOKEN)
-
 from telegrambot import load_parameters
+params = load_parameters()
+#import pdb;pdb.set_trace()
+params = params['7494874190']
+with open("desc_bench_new.json", "r", encoding='utf-8') as final:
+    loaded = json.load(final)
 
-a = load_parameters()
-
-b = 1
-
-for i in list(a.values()):
+for i in loaded[25:]:
+    
+    addon = i[1][0]
+    #if any("человек" in a for a in addon['тип разыскиваемого жильца']) or addon['ищут ли семейную пару'] == 'да':
+    
+    d = []
+    
     try:
-        bot.send_message(i['chat_id'], "test")
-    except Exception as e:
-        b = b+1
-        print(e)
-print(b)
+            
+            print(111111111111)
+            print(i)
+            a = parse_addon(i[1], params)
+            print(a)
+            print(i[0])
+            #d.append(i[1])
+    except:
+        pass       
+ 
+    #for j in i[1]:
+    #    print(j)
+        #parse_addon()
+addon = [{'сколько людей живёт в настоящий момент в квартире?': 0, 'кто живёт в настоящий момент': {'никто': []}, 'характер ограничения': 'строго', 'можно ли заселиться с животными': 'нет', 'изолированная ли комната': 'не указано', 'сколько комнат в квартире': 2, 'ищут ли одного человека': 'нет', 'ищут ли двух человек': 'нет', 'ищут ли одну женщину/девушку': 'да', 'ищут ли одного мужчину/парня': 'нет', 'ищут ли пару из мужчины и женщины': 'нет', 'ищут ли пару женщин/девушек': 'не указано', 'ищут ли пару мужчин/парней': 'нет'}]
+addon = [{'сколько людей живёт в настоящий момент в квартире?': 3, 'кто живёт в настоящий момент': {'собственница': ['женщина', 'не указано'], 'сын': ['мужчина', 13], 'собака': ['собака', 'не указано']}, 'характер ограничения': 'строго', 'можно ли заселиться с животными': 'да', 'изолированная ли комната': 'не указано', 'сколько комнат в квартире': 2, 'ищут ли одного человека': 'да', 'ищут ли двух человек': 'нет', 'ищут ли одну женщину/девушку': 'да', 'ищут ли одного мужчину/парня': 'нет', 'ищут ли пару из мужчины и женщины': 'нет', 'ищут ли пару женщин/девушек': 'нет', 'ищут ли пару мужчин/парней': 'нет'}]
+#import pdb;pdb.set_trace()
+print(parse_addon(addon, params, "good_description"))

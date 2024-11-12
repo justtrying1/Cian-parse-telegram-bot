@@ -1,20 +1,27 @@
-from ai import chain_prompt
-from ai import data, desc
-ad = chain_prompt(data=data, desc=desc)
+import json
+ddd ="123123123.json"
+ccc = "&rent&30000&40000&1 room&Москва&2024-09-30 22-40-46.json"
+def load_old():
+    while True:
+        try:
 
-a = []
-for i in ad[0]:
-    try:
-       #import pdb; pdb.set_trace()
-        if "параметры проживающих" in i:
-            for j in ad[0][i]:
-                for d in ad[0][i][j]:
-                    if "не указано" not in d:
-                        
-                        a.append({f"Жилец {j}": ",".join(str(element) for element in ad[0][i][j])})
-        if "не указано" not in str(ad[0][i]):
-            a.append(f"{i}: {ad[0][i]}\n")
-    except Exception as e:
-        print(e)
-print(a)
+            with open(ddd, 'r', encoding='utf-8') as file:
+                return json.load(file)
+        except:
+            pass
+a = load_old()
+l = []
+for i in range(5,16):
+    for j in a[str(i)]:
+        if j['rooms_count'] == 0:
+            try:
+                l.append(j['description'])
+            except:
+                pass
+print(len(l))
+print(len(set(l)))
 
+
+# File name is mydata.json
+with open("benchmarking.json", "w", encoding='utf-8') as final:
+	json.dump(list(set(l)), final, ensure_ascii=False)

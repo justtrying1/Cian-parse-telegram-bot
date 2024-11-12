@@ -19,9 +19,10 @@ from cianparser.constants import CITIES
 import re
 import copy
 import ai
-from ai import data as dt
+from ai import data_ as dt
 from ai import chain_prompt
 class Sent(Exception): pass
+skipped = 0
 def offer_list_updated(offer_list ,disappeared, appeared):
    
     for d in disappeared:
@@ -85,6 +86,24 @@ def return_non_repetitive_records(file1, file2): #old, new
     
     return result, result_ #disappeared, appeared
 
+def filter_out(offer_list, old, i, break_flag):
+    #break_flag = False
+    print(datetime.now())
+    if len(offer_list) > 0:
+        if any(d['url'] == offer_list[-1]['url'] for d in old[str(i)]):  
+            flag1 = False  
+            while True:
+                if(break_flag):
+                    break
+                #import pdb; pdb.set_trace()
+                for j in range(-1, -len(offer_list)-1, -1):
+                    if(-len(offer_list) == j):  
+                        break_flag = True
+                    if any(d['url'] == offer_list[j]['url'] for d in old[str(i)]):
+                            offer_list.pop(j)
+                            print(len(offer_list))
+                            break
+
 
 OLD_JSON = "&rent&30000&40000&1 room&Москва&2024-09-30 22-40-46.json"
 def load_old():
@@ -95,7 +114,7 @@ def load_old():
                 return json.load(file)
         except:
             pass
-def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, room3=0, no_room = False):
+def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, room3=0, no_room = False, preload = False):
     url_list=[]
     time.sleep(3.5)
     offer_list = []
@@ -133,7 +152,7 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
         if(offers == []):
             time.sleep(3)
             print(0)
-            get_urls(i, min_price=i*5000, room1=room1, room2=room2, max_price=((i+1)*5000)-1, city=city, room3=room3, deal_type="rent",no_room=no_room)
+            get_urls(i, min_price=i*5000, room1=room1, room2=room2, max_price=((i+1)*5000)-1, city=city, room3=room3, deal_type="rent",no_room=no_room, preload=preload)
             return
         for offer in offers:
                 common_data = dict()
@@ -144,15 +163,19 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
                 try:
                     price = define_price_data(offer)
                 except:
-                    price = min_price//2 + max_price//2
-                try:
-                    price_compare = price[pricing_type]
-                except:
-                    price_compare = price
+                    price = {pricing_type : (min_price//2 + max_price//2)}
+               
+                price_compare = price[pricing_type]
+                
                 if(min_price <= price_compare <= max_price):
                     
                     try:
                             #import pdb; pdb.set_trace()
+                            if not preload:
+                                common_data['preload'] = 0
+                            else:
+                                common_data['preload'] = 1
+
                             common_data['metro_dist'] = offer.find_all("div", {"class":"_93444fe79c--remoteness--q8IXp"})[0].text
                             
                     except IndexError:
@@ -182,39 +205,65 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
         else:
             old[str(i)] = []
 
-       # 
         break_flag = False
-        print(datetime.now())
-        if len(offer_list) > 0:
-            if any(d['url'] == offer_list[-1]['url'] for d in old[str(i)]) or any(d['url'] == offer_list[-15]['url'] for d in old[str(i)]):  
-                flag1 = False  
-                while True:
-                    if(break_flag):
-                        break
-                    #import pdb; pdb.set_trace()
-                    for j in range(-1, -len(offer_list)-1, -1):
-                        if(-len(offer_list) == j):  
-                            break_flag = True
-                        if any(d['url'] == offer_list[j]['url'] for d in old[str(i)]):
-                                offer_list.pop(j)
-                                print(len(offer_list))
-                                break
-                        ##else:
-                         #   break_flag = True
-        if no_room:               
-            import pdb; pdb.set_trace()
-            for filtered_offer in offer_list:
-                
-                addon = chain_prompt(data=dt, desc=filtered_offer["description"])
-                filtered_offer["addon"] = addon
-            
+        if not preload:
+            #filter_out(offer_list, old, i, break_flag)      
+            print(datetime.now())
+            if len(offer_list) > 0:
+                if any(d['url'] == offer_list[-1]['url'] for d in old[str(i)]):  
+                    flag1 = False  
+                    while True:
+                        if(break_flag):
+                            break
+                        #import pdb; pdb.set_trace()
+                        for j in range(-1, -len(offer_list)-1, -1):
+                            if(-len(offer_list) == j):  
+                                break_flag = True
+                            if any(d['url'] == offer_list[j]['url'] for d in old[str(i)]):
+                                    offer_list.pop(j)
+                                    print(len(offer_list))
+                                    break
         print(datetime.now())
         page += 1
         url_list = list(dict.fromkeys(url_list))
         print(len(url_list))
         print(res.url)    
-        if(flag or page == 4 or break_flag): #
-            print(break_flag)
+        if(flag or (page == 4) or break_flag): 
+            if preload:
+                #filter_out(offer_list, old, i, break_flag)
+                print(datetime.now())
+                if len(offer_list) > 0:
+                    if any(d['url'] == offer_list[-1]['url'] for d in old[str(i)]):  
+                        flag1 = False  
+                        while True:
+                            if(break_flag):
+                                break
+                            #import pdb; pdb.set_trace()
+                            for j in range(-1, -len(offer_list)-1, -1):
+                                if(-len(offer_list) == j):  
+                                    break_flag = True
+                                if any(d['url'] == offer_list[j]['url'] for d in old[str(i)]):
+                                        offer_list.pop(j)
+                                        print(len(offer_list))
+                                        break
+            if no_room and not preload:               
+                if len(offer_list) > 10:
+                    global skipped
+                    skipped  = skipped + len(offer_list)
+                if len(offer_list) <= 10:        
+                    for filtered_offer in offer_list:
+                        #import pdb; pdb.set_trace()
+                        print(filtered_offer["description"])
+                        global dt
+                        addon, good_description = chain_prompt(data=dt, desc=filtered_offer["description"], type = 1)
+                        filtered_offer["addon"] = addon
+                        filtered_offer["good_description"] = good_description
+                        dt = {
+    'model': 'gpt-4o-mini', 
+    'messages': [ {'role': 'user', 'content': r"{0} {1}"}
+    ]
+}
+            #print(break_flag)
             print(page)
             offer_list = list({v['url']:v for v in offer_list}.values())
 
@@ -223,16 +272,16 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
             break
 
 
-def parse( i_min, i_max, room1=1, room2=0, no_room=False):
+def parse( i_min, i_max, preload=False, room1=1, room2=0, no_room=False):
     print("room2 = "+str(room2))
     first_time = True
                         
     global offer_list_global
     offer_list_global = {}
     #offer_list = []        
-    
+    #import pdb; pdb.set_trace()
     for i in range(i_min, i_max):
-        get_urls(i, min_price=i*5000, max_price=((i+1)*5000)-1, city="Москва", deal_type="rent",room2=room2,room1=room1,no_room=no_room)
+        get_urls(i, min_price=i*5000, max_price=((i+1)*5000)-1, city="Москва", deal_type="rent",room2=room2,room1=room1,no_room=no_room, preload=preload)
     
         location_ = os.path.realpath(
             os.path.join(os.getcwd(), os.path.dirname("goo.py")))
@@ -257,7 +306,8 @@ def parse( i_min, i_max, room1=1, room2=0, no_room=False):
                             old_json[str(i)] = offer_list_updated(offer_list=old_json[str(i)], disappeared=disappeared, appeared=offer_list_global[str(i)]) 
                             print(offer_list_global[str(i)])
                             from telegrambot import save_cache 
-                            if(not flagger and len(offer_list_global[str(i)]) > 0):       
+                            if(not flagger and len(offer_list_global[str(i)]) > 0 and not preload):       
+                                #import pdb; pdb.set_trace()
                                # pass
                                 save_cache(offer_list_global[str(i)][:-len(offer_list_global[str(i)])+50])
                             while True:
@@ -274,14 +324,16 @@ def parse( i_min, i_max, room1=1, room2=0, no_room=False):
                             raise Sent
         except Sent:
             pass
-        
+#parse(2,25,room1=1,room2=1, no_room=True, preload=True) # NO ROOOOOOOOM!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#parse(2,25,room1=1,room2=1, no_room=False, preload=True)   # YES ROOOOOOM!!!!!!!!!!!!!!!!!!!!!
 while True:
-    time.sleep(20)
-   # try:
     then = datetime.now()
-    parse(2,10,room1=1,room2=1, no_room=True)    
-    parse(2,10,room1=1,room2=1, no_room=False)    
-    parse(5,25,room1=1,room2=1)
+    parse(2,10,room1=0,room2=0, no_room=True)    
+   # parse(2,10,room1=1,room2=1, no_room=False)    
+   # parse(5,25,room1=1,room2=1)
     print(datetime.now() - then )
+    print("skipped " + str(skipped))
+    skipped = 0
+    time.sleep(15)
    ## except:
    #     print("error!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
