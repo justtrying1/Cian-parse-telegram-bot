@@ -202,18 +202,13 @@ def parse_addon(addon, params, good_description):
             print(len(list(addon['кто живёт в настоящий момент'].values())))
             mates = addon['кто живёт в настоящий момент']
             for mate in mates:
-                if not any('никто' in a for a in  mates):
-                    if (any("женщина" in a for a in mate) or any("женщина" in a for a in mate)) and not any("Жен" in a for a in params['mates']):
+                if not any('никто' in a for a in  mates) and not len(mates) == 1:
+                
+                    if (any("женщина" in a for a in [mate]) or any("женщина" in str(a) for a in addon['кто живёт в настоящий момент'][mate])) and not any("Женщины" in a for a in params['mates']):
                         raise Exception
-                    if (any("мужчина" in a for a in mate or any("мужчина" in a for a in  mate))) and not any("Муж" in a for a in params['mates']):
-                        raise Exception  
-                    try:
-                        if (any("женщина" in a for a in mate) or any("женщина" in a for a in addon['кто живёт в настоящий момент'][mate])) and not any("Женщины" in a for a in params['mates']):
-                            raise Exception
-                        if (any("мужчина" in a for a in mate or any("мужчина" in a for a in  addon['кто живёт в настоящий момент'][mate]))) and not any("Мужчины" in a for a in params['mates']):
-                            raise Exception 
-                    except:
-                        pass
+                    if (any("мужчина" in a for a in [mate] or any("мужчина" in str(a) for a in  addon['кто живёт в настоящий момент'][mate]))) and not any("Мужчины" in a for a in params['mates']):
+                        raise Exception 
+                    
                 else:
                     pass
         else:
@@ -553,8 +548,8 @@ def main():
     # Обработка ввода количества комнат
     def get_animal(message):
         keyboard = types.InlineKeyboardMarkup()
-        button_bar = types.InlineKeyboardButton('Кошка🐈‍⬛', callback_data='animal 0')
-        button_bar2 = types.InlineKeyboardButton('Собака🦮', callback_data='animal 1')
+        button_bar = types.InlineKeyboardButton('Кошка 🐈‍⬛', callback_data='animal 0')
+        button_bar2 = types.InlineKeyboardButton('Собака 🦮', callback_data='animal 1')
         
         keyboard.add(button_bar)
         keyboard.add(button_bar2)
