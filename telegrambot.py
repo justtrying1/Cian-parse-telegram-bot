@@ -1,5 +1,5 @@
 
-API_TOKEN = '7006315291:AAE_Nb6L-pNyVi5tFylMycjZnkAYrkkzyYs'  # Замените на ваш токен
+#API_TOKEN = '7006315291:AAE_Nb6L-pNyVi5tFylMycjZnkAYrkkzyYs'  # Замените на ваш токен
 API_TOKEN = '7535762439:AAFtiztp9pG3JsPnX7T7IRjuB6cQtqe5sno'
 JSON_FILE_PATH = '&rent&30000&40000&1 room&Москва&2024-09-30 22-40-46.json'
 import telebot
@@ -12,6 +12,7 @@ from datetime import timedelta
 from datetime import datetime
 from copy import deepcopy
 from telebot import types
+import traceback
 
 #API_TOKEN = 'YOUR_API_TOKEN'  # Замените на ваш токен
 bot = telebot.TeleBot(API_TOKEN)
@@ -73,8 +74,8 @@ def save_cache(appeared):
         else:
             cache[str(chat_id)]['last 20'] = {}
         if len(cache[str(chat_id)]['last 20'].keys()) > 20:
-            for i in list(cache[str(chat_id)]['last 20'].keys())[:-20]:
-                cache[str(chat_id)]['last 20'].pop(i)
+            for j in list(cache[str(chat_id)]['last 20'].keys())[:-20]:
+                cache[str(chat_id)]['last 20'].pop(j)
         if(len(new_filtered_ads)) > 0:
              
            # import pdb; pdb.set_trace()            
@@ -104,16 +105,18 @@ def save_cache(appeared):
                     if parsed_addon != "":
                         print("addon parsed!")
                         bot.send_message(chat_id, msg, reply_markup=keyboard)
-                        button_bar = types.InlineKeyboardButton('Изменить настройки поиска', callback_data="settings")
+                        #button_bar = types.InlineKeyboardButton('Изменить настройки поиска', callback_data="settings")
                         keyboard = types.InlineKeyboardMarkup()
-                        keyboard.add(button_bar)
+                       # keyboard.add(button_bar)
                         
                         bot.send_message(chat_id, text='Появилось {} новых объявления по вашему запросу, чтобы поменять параметры воспользуйтесь командой /start\n'    
                                         "@KvartiraDar - канал про обновления".format(str(len(new_filtered_ads))), reply_markup=keyboard)
                 
             except:
-                print("blocked")
-                pass
+                if chat_id == 7494874190:
+                    import pdb; pdb.set_trace()
+                print(traceback.format_exc())
+                
             save_action("sent", sent_list)
         while True:
             try:
@@ -147,11 +150,11 @@ def filter_ads(ads, criteria):
     for ad in ads:       
         for room_criteria in criteria['rooms']:
             try:
-                print(criteria['metro_dist'])
+                dodo = (criteria['metro_dist'])
             except KeyError:
                 criteria['metro_dist'] = 1000
             try:
-                print(criteria['author_type'])
+                dodo = (criteria['author_type'])
             except KeyError:
                 criteria['author_type'] = "Любой"
             
@@ -184,18 +187,17 @@ def filter_ads(ads, criteria):
             except KeyError:
                 pass        
     return filtered
-import traceback
+
 def parse_addon(addon, params, good_description):
     addon = addon[0]
     if not any("Один" in a for a in params['mates']) and not any("одного" in a for a in params['mates']):
         params['mates'].append("одного")
-        params['mates'].append("Один")
 
     flag = True
     if "сколько людей живёт в настоящий момент в квартире" in addon:
         addon["сколько людей живёт в настоящий момент в квартире?"] = addon["сколько людей живёт в настоящий момент в квартире"] 
     try:
-        if ("не ука" in str(addon["сколько людей живёт в настоящий момент в квартире?"])) or (addon["сколько людей живёт в настоящий момент в квартире?"] == 0) or ((len(list(addon['кто живёт в настоящий момент'].values())) > 1) and any("одного" in a for a in params['mates'])) or (((len([addon['кто живёт в настоящий момент'].values()])) == 1) and any("Один" in a for a in params['mates'])):
+        if ("не ука" in str(addon["сколько людей живёт в настоящий момент в квартире?"])) or (addon["сколько людей живёт в настоящий момент в квартире?"] == 0) or (any("одного" in a for a in params['mates'])) or (((len([addon['кто живёт в настоящий момент'].values()])) == 1) and any("Один" in a for a in params['mates'])):
             #import pdb;pdb.set_trace()
             print(len(list(addon['кто живёт в настоящий момент'].values())))
             mates = addon['кто живёт в настоящий момент']
@@ -215,9 +217,6 @@ def parse_addon(addon, params, good_description):
                 else:
                     pass
         else:
-            print((len(list(addon['кто живёт в настоящий момент'].values()))))
-            print((len(list(addon['кто живёт в настоящий момент'].values())) == 1))
-            print(any("Один" in a for a in params['mates']))
             raise Exception
     
         a = 0
@@ -232,7 +231,6 @@ def parse_addon(addon, params, good_description):
                 raise Exception
             elif addon['сколько комнат в квартире'] == 1:
                 addon['сколько комнат в квартире'] = "не указано"
-                raise Exception
         
 
         #if (any("мужчина" in a for a in addon['тип разыскиваемого жильца']) and any("Мужчина" in a for a in params['sex'])) or (any("женщина" in a for a in addon['тип разыскиваемого жильца']) and any("Женщина" in a for a in params['sex'])) or (any("человек" in a for a in addon['тип разыскиваемого жильца'])):

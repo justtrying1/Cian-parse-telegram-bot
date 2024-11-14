@@ -208,7 +208,7 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
         break_flag = False
         if not preload:
             #filter_out(offer_list, old, i, break_flag)      
-            print(datetime.now())
+          #  print(datetime.now())
             if len(offer_list) > 0:
                 if any(d['url'] == offer_list[-1]['url'] for d in old[str(i)]):  
                     flag1 = False  
@@ -253,7 +253,7 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
                 if len(offer_list) <= 10:        
                     for filtered_offer in offer_list:
                         #import pdb; pdb.set_trace()
-                        print(filtered_offer["description"])
+                        #print(filtered_offer["description"])
                         global dt
                         addon, good_description = chain_prompt(data=dt, desc=filtered_offer["description"], type = 1)
                         filtered_offer["addon"] = addon
