@@ -82,6 +82,7 @@ def save_cache(appeared):
             
             try:
               #  import pdb; pdb.set_trace()
+                parsed_count = 0
                 for ad in new_filtered_ads:
                     cache[str(chat_id)]['last 20'][ad['url']] = ad['description']  
                     
@@ -102,15 +103,23 @@ def save_cache(appeared):
                         parsed_addon = parse_addon(ad['addon'], params=all_params.get(i), good_description=ad['good_description'])
                         msg = msg + parsed_addon
                   #  import pdb; pdb.set_trace()
+                    else:
+                        parsed_addon = ""
+                    
+
                     if parsed_addon != "":
+                        parsed_count = parsed_count + 1 
                         print("addon parsed!")
                         bot.send_message(chat_id, msg, reply_markup=keyboard)
                         #button_bar = types.InlineKeyboardButton('Изменить настройки поиска', callback_data="settings")
                         keyboard = types.InlineKeyboardMarkup()
                        # keyboard.add(button_bar)
-                        
-                        bot.send_message(chat_id, text='Появилось {} новых объявления по вашему запросу, чтобы поменять параметры воспользуйтесь командой /start\n'    
-                                        "@KvartiraDar - канал про обновления".format(str(len(new_filtered_ads))), reply_markup=keyboard)
+                    elif chat_id == 7494874190:
+                        bot.send_message(chat_id, ad['good_description'])
+
+                if parsed_count > 0:
+                    bot.send_message(chat_id, text='Появилось {} новых объявления по вашему запросу, чтобы поменять параметры воспользуйтесь командой /start\n'    
+                                    "@KvartiraDar - канал про обновления".format(str(parsed_count)), reply_markup=keyboard)
                 
             except:
                 if chat_id == 7494874190:
@@ -202,11 +211,11 @@ def parse_addon(addon, params, good_description):
             print(len(list(addon['кто живёт в настоящий момент'].values())))
             mates = addon['кто живёт в настоящий момент']
             for mate in mates:
-                if not any('никто' in a for a in  mates) and not len(mates) == 1:
+                if not any('никто' in a for a in  mates) or len(mates) != 1:
                 
                     if (any("женщина" in a for a in [mate]) or any("женщина" in str(a) for a in addon['кто живёт в настоящий момент'][mate])) and not any("Женщины" in a for a in params['mates']):
                         raise Exception
-                    if (any("мужчина" in a for a in [mate] or any("мужчина" in str(a) for a in  addon['кто живёт в настоящий момент'][mate]))) and not any("Мужчины" in a for a in params['mates']):
+                    if (any("мужчина" in a for a in [mate]) or any("мужчина" in str(a) for a in  addon['кто живёт в настоящий момент'][mate])) and not any("Мужчины" in a for a in params['mates']):
                         raise Exception 
                     
                 else:
@@ -254,25 +263,32 @@ def parse_addon(addon, params, good_description):
             raise Exception
         if user_pair and "не указано" in addon["ищут ли пару из мужчины и женщины"] and (("да" in addon["ищут ли пару женщин/девушек"]) or "да" in addon["ищут ли пару мужчин/парней"]  or "да" in addon['ищут ли одного мужчину/парня'] or "да" in addon['ищут ли одну женщину/девушку']):
             raise Exception
-        if both_net and "да" in addon['ищут ли двух человек'] and any("двое" in a for a in params['sex']):
-            pass
-           
         
-        elif  ("да" in addon['ищут ли одного человека']) and any("двое" in a for a in params['sex']):
+        if both_net and "да" in addon['ищут ли двух человек'] and any("двое" in a for a in params['sex']):
+            
+            pass   
+        
+        elif  both_net and ("да" in addon['ищут ли одного человека']) and any("двое" in a for a in params['sex']):
             raise Exception
+        
+        
+        #import pdb;pdb.set_trace()
         
         if user_man and "нет" in addon['ищут ли одного мужчину/парня']:
             raise Exception
-        if  user_woman and "нет" in addon['ищут ли одну женщину/девушку']: 
+        
+        if  user_woman  and "нет" in addon['ищут ли одну женщину/девушку']: 
             raise Exception
-        if user_woman and ("не указано" in addon['ищут ли одну женщину/девушку']) and ("да" in addon['ищут ли одного мужчину/парня'] or ("да" in addon["ищут ли пару мужчин/парней"]) or "да" in addon["ищут ли пару из мужчины и женщины"]  or "да" in addon["ищут ли пару женщин/девушек"]):
+        
+        if user_woman and  (("не указано" in addon['ищут ли одну женщину/девушку']) and ("да" in addon['ищут ли одного мужчину/парня'] or ("да" in addon["ищут ли пару мужчин/парней"]) or "да" in addon["ищут ли пару из мужчины и женщины"]  or "да" in addon["ищут ли пару женщин/девушек"])):
             raise Exception
-        if user_man and ("не указано" in addon['ищут ли одного мужчину/парня']) and "да" in addon['ищут ли одну женщину/девушку']  or (("да" in addon["ищут ли пару мужчин/парней"]) or "да" in addon["ищут ли пару из мужчины и женщины"]  or "да" in addon["ищут ли пару женщин/девушек"]):    
+        
+        if user_man and  (("не указано" in addon['ищут ли одного мужчину/парня']) and "да" in addon['ищут ли одну женщину/девушку']  or (("да" in addon["ищут ли пару мужчин/парней"]) or "да" in addon["ищут ли пару из мужчины и женщины"]  or "да" in addon["ищут ли пару женщин/девушек"])):    
             raise Exception
         
         if both_net and "да" in addon['ищут ли одного человека'] and not any("двое" in a for a in params['sex']):
             pass  
-        elif "да" in addon['ищут ли двух человек'] and not any("двое" in a for a in params['sex']):
+        if both_net and "да" in addon['ищут ли двух человек'] and not any("двое" in a for a in params['sex']):
             raise Exception
         if (any("кошка" in a for a in addon['можно ли заселиться с животными']) and any("Кошка" in a for a in params['animal'])) or (any("cобака" in a for a in addon['можно ли заселиться с животными']) and any("Собака" in a for a in params['animal'])) or "да" in addon['можно ли заселиться с животными'] or "не " in addon['можно ли заселиться с животными']:
             pass
