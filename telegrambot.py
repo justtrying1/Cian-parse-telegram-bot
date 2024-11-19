@@ -52,7 +52,7 @@ def load_cache():
     return a
 
 def save_cache(appeared):
-    print(len(appeared))
+  #  print(len(appeared))
     all_params = load_parameters()
     sent_list = {}
     cache = load_cache()
@@ -60,10 +60,10 @@ def save_cache(appeared):
         chat_id = all_params.get(i)['chat_id']
         new_filtered_ads = filter_ads(appeared, all_params.get(i))
         sent_list[chat_id] = str(len(new_filtered_ads))
-        print(str(len(new_filtered_ads)) + "длина появившихся")
+       # print(str(len(new_filtered_ads)) + "длина появившихся")
         if str(chat_id) not in cache.keys():
             cache[str(chat_id)] = {}
-        print(i)
+      #  print(i)
         try:
             if isinstance(cache[str(chat_id)]['last 20'], list):
                 cache[str(chat_id)]['last 20'] = {}
@@ -122,8 +122,8 @@ def save_cache(appeared):
                                     "@KvartiraDar - канал про обновления".format(str(parsed_count)), reply_markup=keyboard)
                 
             except:
-                if chat_id == 7494874190:
-                    import pdb; pdb.set_trace()
+              #  if chat_id == 7494874190:
+                   # import pdb; pdb.set_trace()
                 print(traceback.format_exc())
                 
             save_action("sent", sent_list)
@@ -250,7 +250,10 @@ def parse_addon(addon, params, good_description):
         user_guys =  any("Муж" in a for a in params['sex']) and not any("Жен" in a for a in params['sex']) and any("двое" in a for a in params['sex'])
         user_girls = not any("Муж" in a for a in params['sex']) and  any("Жен" in a for a in params['sex']) and any("двое" in a for a in params['sex'])
         
-        
+        if (user_man or user_woman) and (not "да" in addon['ищут ли одного человека']) and "да" in addon['ищут ли двух человек']:
+            raise Exception
+        if (user_pair or user_guys or user_girls) and (not "да" in addon['ищут ли двух человек']) and "да" in addon['ищут ли одного человека']:
+            raise Exception
         if user_pair and "нет" in addon["ищут ли пару из мужчины и женщины"]:
                 raise Exception
         if user_guys and "нет" in addon["ищут ли пару мужчин/парней"]:
@@ -264,11 +267,11 @@ def parse_addon(addon, params, good_description):
         if user_pair and "не указано" in addon["ищут ли пару из мужчины и женщины"] and (("да" in addon["ищут ли пару женщин/девушек"]) or "да" in addon["ищут ли пару мужчин/парней"]  or "да" in addon['ищут ли одного мужчину/парня'] or "да" in addon['ищут ли одну женщину/девушку']):
             raise Exception
         
-        if both_net and "да" in addon['ищут ли двух человек'] and any("двое" in a for a in params['sex']):
+        if not user_man and not user_woman and "да" in addon['ищут ли двух человек'] and any("двое" in a for a in params['sex']):
             
             pass   
         
-        elif  both_net and ("да" in addon['ищут ли одного человека']) and any("двое" in a for a in params['sex']):
+        elif  not user_man and not user_woman and ("да" in addon['ищут ли одного человека']) and any("двое" in a for a in params['sex']):
             raise Exception
         
         
@@ -286,9 +289,9 @@ def parse_addon(addon, params, good_description):
         if user_man and  (("не указано" in addon['ищут ли одного мужчину/парня']) and "да" in addon['ищут ли одну женщину/девушку']  or (("да" in addon["ищут ли пару мужчин/парней"]) or "да" in addon["ищут ли пару из мужчины и женщины"]  or "да" in addon["ищут ли пару женщин/девушек"])):    
             raise Exception
         
-        if both_net and "да" in addon['ищут ли одного человека'] and not any("двое" in a for a in params['sex']):
+        if not user_man and not user_woman and "да" in addon['ищут ли одного человека'] and not any("двое" in a for a in params['sex']):
             pass  
-        if both_net and "да" in addon['ищут ли двух человек'] and not any("двое" in a for a in params['sex']):
+        if not user_man and not user_woman and "да" in addon['ищут ли двух человек'] and not any("двое" in a for a in params['sex']):
             raise Exception
         if (any("кошка" in a for a in addon['можно ли заселиться с животными']) and any("Кошка" in a for a in params['animal'])) or (any("cобака" in a for a in addon['можно ли заселиться с животными']) and any("Собака" in a for a in params['animal'])) or "да" in addon['можно ли заселиться с животными'] or "не " in addon['можно ли заселиться с животными']:
             pass

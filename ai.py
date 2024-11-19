@@ -4,7 +4,7 @@ import json
 import os
 from dotenv import load_dotenv
 from json.decoder import JSONDecodeError
-
+load_dotenv()
 # Укажите ваш API ключ
 api_key = os.environ.get("OPENAI_API_KEY")
 
@@ -80,7 +80,8 @@ desc = """
 
 
 def chain_prompt(desc, data, type):
-    
+    b = ""
+   # import pdb; pdb.set_trace()
     a = send_request(desc, data, type=type)
     good_description = a
     print(a)
@@ -147,8 +148,10 @@ def chain_prompt(desc, data, type):
             data['messages'].append({"role": "assistant", "content":"{}".format(a)})
             data['messages'].append({"role":"user", "content":"Исправь json  чтобы я твое сообщение его мог преобразовать с помощью json.loads() на Python"})
     print(desc)           
-   
-    print(b)
+    try:
+        print(b)
+    except:
+        pass
     global data_
     data_ = {
     'model': 'gpt-4o-mini', 
