@@ -244,13 +244,13 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
                                     break_flag = True
                                 if any(d['url'] == offer_list[j]['url'] for d in old[str(i)]):
                                         offer_list.pop(j)
-                                        print(len(offer_list))
+                                        #print(len(offer_list))
                                         break
             if no_room and not preload:               
-                if len(offer_list) > 10:
+                if len(offer_list) > 20:
                     global skipped
                     skipped  = skipped + len(offer_list)
-                if len(offer_list) <= 10:        
+                if len(offer_list) <= 20:        
                     for filtered_offer in offer_list:
                         #import pdb; pdb.set_trace()
                         #print(filtered_offer["description"])
