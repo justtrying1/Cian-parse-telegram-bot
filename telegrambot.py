@@ -116,7 +116,8 @@ def save_cache(appeared):
                         keyboard = types.InlineKeyboardMarkup()
                        # keyboard.add(button_bar)
                     elif chat_id == 7494874190:
-                        bot.send_message(chat_id, ad['good_description'])
+                        
+                        bot.send_message(chat_id, ad['good_description']+"\n" + msg)
 
                 if parsed_count > 0:
                     bot.send_message(chat_id, text='Появилось {} новых объявления по вашему запросу, чтобы поменять параметры воспользуйтесь командой /start\n'    
