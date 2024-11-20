@@ -106,10 +106,11 @@ def save_cache(appeared):
                     else:
                         parsed_addon = ""
                     
-
+                    print(chat_id)
                     if parsed_addon != "":
                         parsed_count = parsed_count + 1 
                         print("addon parsed!")
+                        
                         bot.send_message(chat_id, msg, reply_markup=keyboard)
                         #button_bar = types.InlineKeyboardButton('Изменить настройки поиска', callback_data="settings")
                         keyboard = types.InlineKeyboardMarkup()
