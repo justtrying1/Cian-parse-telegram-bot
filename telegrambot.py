@@ -204,6 +204,9 @@ def parse_addon(addon, params, good_description):
         params['mates'].append("одного")
 
     flag = True
+    if "не указано" in addon['можно ли заселиться с животными'] and not any("про животных" in a for a in params['animal']) and params['animal'] != []:
+        raise Exception
+    
     if "сколько людей живёт в настоящий момент в квартире" in addon:
         addon["сколько людей живёт в настоящий момент в квартире?"] = addon["сколько людей живёт в настоящий момент в квартире"] 
     try:
@@ -432,7 +435,7 @@ def main():
         if 'animal' in call.data:
         #import pdb; pdb.set_trace()
             keyboard = types.InlineKeyboardMarkup()
-            list = [types.InlineKeyboardButton('Собака🦮' , callback_data='animal 1'), types.InlineKeyboardButton('Кошка 🐈‍⬛', callback_data='animal 0')]
+            list = [types.InlineKeyboardButton('Показывать объявления где про животных ничего не сказано', callback_data='animal 2'), types.InlineKeyboardButton('Собака🦮' , callback_data='animal 1'), types.InlineKeyboardButton('Кошка 🐈‍⬛', callback_data='animal 0')]
             
             if call.data.split()[1] == "continue":
                 old_start(call.message)
@@ -570,9 +573,11 @@ def main():
         keyboard = types.InlineKeyboardMarkup()
         button_bar = types.InlineKeyboardButton('Кошка 🐈‍⬛', callback_data='animal 0')
         button_bar2 = types.InlineKeyboardButton('Собака 🦮', callback_data='animal 1')
-        
+        button_bar4 = types.InlineKeyboardButton('Показывать объявления где про животных ничего не сказано', callback_data='animal 2')
         keyboard.add(button_bar)
         keyboard.add(button_bar2)
+        
+        keyboard.add(button_bar4)
         button_bar = types.InlineKeyboardButton('Пропустить', callback_data='animal continue')
         keyboard.add(button_bar)   
         TINY_DB[message.chat.id]['animal_input'] = [False, False]
