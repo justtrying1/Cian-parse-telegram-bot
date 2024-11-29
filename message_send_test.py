@@ -17,16 +17,15 @@ bot = telebot.TeleBot(API_TOKEN)
 
 from telegrambot import load_parameters
 
-a = load_parameters()
-
+d = load_parameters()
 b = 1
 
-for i in list(a.values()):
+for i in list(d.values()):
+    
     try:
-        if i['chat_id'] == 7494874190:
-            b = b+10
-            bot.send_message(i['chat_id'], "test")
+        print(i['sex'])
+        bot.send_message(i['chat_id'], "Я случайно удалил ровно половину пользовательских данных :) поэтому если у вас есть знакомые которые пользовались ботом, то скажите им об этом, если вы получили это сообщение, значит ваши данные у меня остались. ")
     except Exception as e:
-        b = b+1
+        
         print(e)
 print(b)

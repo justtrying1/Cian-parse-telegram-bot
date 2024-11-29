@@ -21,6 +21,7 @@ import copy
 import ai
 from ai import data_ as dt
 from ai import chain_prompt
+from telegrambot import save_cache
 class Sent(Exception): pass
 skipped = 0
 def offer_list_updated(offer_list ,disappeared, appeared):
@@ -208,7 +209,7 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
         break_flag = False
         if not preload:
             #filter_out(offer_list, old, i, break_flag)      
-          #  print(datetime.now())
+          
             if len(offer_list) > 0:
                 if any(d['url'] == offer_list[-1]['url'] for d in old[str(i)]):  
                     flag1 = False  
@@ -244,7 +245,7 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
                                     break_flag = True
                                 if any(d['url'] == offer_list[j]['url'] for d in old[str(i)]):
                                         offer_list.pop(j)
-                                        #print(len(offer_list))
+                                        
                                         break
             if no_room and not preload:               
                 if len(offer_list) > 20:
@@ -253,7 +254,7 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
                 if len(offer_list) <= 20:        
                     for filtered_offer in offer_list:
                         #import pdb; pdb.set_trace()
-                        #print(filtered_offer["description"])
+
                         global dt
                         addon, good_description = chain_prompt(data=dt, desc=filtered_offer["description"], type = 1)
                         filtered_offer["addon"] = addon
@@ -263,7 +264,7 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
     'messages': [ {'role': 'user', 'content': r"{0} {1}"}
     ]
 }
-            #print(break_flag)
+            
             print(page)
             offer_list = list({v['url']:v for v in offer_list}.values())
 
@@ -305,22 +306,25 @@ def parse( i_min, i_max, preload=False, room1=1, room2=0, no_room=False):
                             flagger = False  
                             old_json[str(i)] = offer_list_updated(offer_list=old_json[str(i)], disappeared=disappeared, appeared=offer_list_global[str(i)]) 
                             print(offer_list_global[str(i)])
-                            from telegrambot import save_cache 
+                            
                             if(not flagger and len(offer_list_global[str(i)]) > 0 and not preload):       
+                                print(2)
                                 #import pdb; pdb.set_trace()
                                # pass
                                 save_cache(offer_list_global[str(i)][:-len(offer_list_global[str(i)])+50])
                             while True:
                                 try:
-                                    
+                                    print(3)
                                     with open(filename, "w", encoding='utf-8') as new_file:       
                                         json.dump(old_json, new_file, ensure_ascii=False, indent = 6)
                                     break
                                 except:
+                                    import traceback
+                                    print(traceback.format_exc())
                                     pass
                             
                             
-                            #time.sleep(30)
+                            
                             raise Sent
         except Sent:
             pass

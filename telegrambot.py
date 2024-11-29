@@ -23,8 +23,8 @@ TINY_DB = {}
 last_ads = set()  # Используем множество для хранения уникальных URL объявлений
 PARAMS_FILE = "params.json"
 CACHE_FILE = "cache.json"
-ACTION_FILE = "action"
-ACTION_FILE = "{ACTION_FILE}{date}.json".format(ACTION_FILE=ACTION_FILE, date=datetime.now().strftime('%Y-%m-%d %H-%M'))
+ACTION_FILE = "actions"
+ACTION_FILE = "{ACTION_FILE}.json".format(ACTION_FILE=ACTION_FILE)
 def load_action():
     try:
         if os.path.exists(ACTION_FILE):
@@ -42,9 +42,12 @@ def save_action(chat_id, action_name):
     if str(chat_id) not in action.keys():
         action[str(chat_id)] = {}
     action[str(chat_id)][datetime.now().strftime('%Y-%m-%d %H-%M-%S')] = action_name
-    
-    with open(ACTION_FILE, 'w', encoding='utf-8') as file:
-        json.dump(action, file, ensure_ascii=False)
+    if action_name == "i am here":
+        with open("heres.json", 'w', encoding='utf-8') as file:
+            json.dump(action, file, ensure_ascii=False)
+    else:
+        with open(ACTION_FILE, 'w', encoding='utf-8') as file:
+            json.dump(action, file, ensure_ascii=False)
     
 def load_cache():
     with open(CACHE_FILE, "r", encoding='utf-8') as file:
@@ -56,7 +59,16 @@ def save_cache(appeared):
     all_params = load_parameters()
     sent_list = {}
     cache = load_cache()
+    print(all_params.keys())
     for i in all_params.keys():
+        if all_params[i] == {}:
+            try:
+                #bot.send_message(int(i), "Уважаемый пользователь, ваши данные были утеряны всвязи с техничискими неполадками, чтобы и дальше получать новые объявления пожалуйста пройдите заново регистрацию с помощью команды /start")
+                continue
+            except:
+                
+                print(traceback.format_exc())
+                continue
         chat_id = all_params.get(i)['chat_id']
         new_filtered_ads = filter_ads(appeared, all_params.get(i))
         sent_list[chat_id] = str(len(new_filtered_ads))
@@ -101,27 +113,34 @@ def save_cache(appeared):
 """
                     if 'addon' in ad:
                         parsed_addon = parse_addon(ad['addon'], params=all_params.get(i), good_description=ad['good_description'])
-                        msg = msg + parsed_addon
+                        msg = msg + parsed_addon  
                   #  import pdb; pdb.set_trace()
                     else:
                         parsed_addon = ""
                     
-                    print(chat_id)
+                    
                     if parsed_addon != "":
                         parsed_count = parsed_count + 1 
                         print("addon parsed!")
                         
                         bot.send_message(chat_id, msg, reply_markup=keyboard)
-                        #button_bar = types.InlineKeyboardButton('Изменить настройки поиска', callback_data="settings")
-                        keyboard = types.InlineKeyboardMarkup()
-                       # keyboard.add(button_bar)
+                       
+                    
                     elif chat_id == 7494874190:
                         
-                        bot.send_message(chat_id, ad['good_description']+"\n" + msg)
+                        bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n")
 
-                if parsed_count > 0:
+                if parsed_count > 0: 
+                    button_bar = types.InlineKeyboardButton('Да', callback_data="i am here")
+                    button_bar2 = types.InlineKeyboardButton('Нет', callback_data="i am no")
+                    keyboard = types.InlineKeyboardMarkup()
+                    keyboard.add(button_bar)
+                    keyboard.add(button_bar2)
+                    if "answered" not in all_params.get(i).keys():
+
+                        bot.send_message(bot.send_message(chat_id, text='Нравится ли вам сервис?', reply_markup=keyboard))
                     bot.send_message(chat_id, text='Появилось {} новых объявления по вашему запросу, чтобы поменять параметры воспользуйтесь командой /start\n'    
-                                    "@KvartiraDar - канал про обновления".format(str(parsed_count)), reply_markup=keyboard)
+                                    "@KvartiraDar - канал для обратной связи".format(str(parsed_count)))
                 
             except:
               #  if chat_id == 7494874190:
@@ -173,11 +192,11 @@ def filter_ads(ads, criteria):
             try:
                 if criteria['author_type'] == "Владелец" and ad['author_type'] == "Владелец":
                     try:
-                        if (metro_dist < criteria['metro_dist'] and room_criteria['min_price'] <= ad['price_per_month'] <= room_criteria['max_price'] and
+                        if (metro_dist <= criteria['metro_dist'] + 8 and room_criteria['min_price'] <= ad['price_per_month'] <= room_criteria['max_price'] and
                             ad['rooms_count'] == room_criteria['rooms'] and list(filter(re.compile ( criteria['undergrounds'] ).match, ad['underground']))):
                             filtered.append(ad)
                     except:    
-                        if (metro_dist < criteria['metro_dist'] and room_criteria['min_price'] <= ad['price_per_month'] <= room_criteria['max_price'] and
+                        if (metro_dist <= criteria['metro_dist'] + 8 and room_criteria['min_price'] <= ad['price_per_month'] <= room_criteria['max_price'] and
                             ad['rooms_count'] == room_criteria['rooms'] and
                             (list(filter(re.compile(ad['underground']).match, criteria['undergrounds'])))):
                         
@@ -201,13 +220,13 @@ def filter_ads(ads, criteria):
 
 def parse_addon(addon, params, good_description):
     addon = addon[0]
+    if any("двое" in a for a in params['sex']) and not any("Муж" in a for a in params['sex']) or not any ("Жен" in a for a in params['sex']):
+        params['sex'] = params['sex'] + ["Мужчина", "Женщина"]
     if not any("Один" in a for a in params['mates']) and not any("одного" in a for a in params['mates']):
         params['mates'].append("одного")
-
-    flag = True
     if "не указано" in addon['можно ли заселиться с животными'] and not any("про животных" in a for a in params['animal']) and params['animal'] != []:
         raise Exception
-    
+    flag = True
     if "сколько людей живёт в настоящий момент в квартире" in addon:
         addon["сколько людей живёт в настоящий момент в квартире?"] = addon["сколько людей живёт в настоящий момент в квартире"] 
     try:
@@ -218,9 +237,9 @@ def parse_addon(addon, params, good_description):
             for mate in mates:
                 if not any('никто' in a for a in  mates) or len(mates) != 1:
                 
-                    if (any("женщина" in a for a in [mate]) or any("женщина" in str(a) for a in addon['кто живёт в настоящий момент'][mate])) and not any("Женщины" in a for a in params['mates']):
+                    if (any("женщина" in a for a in [mate]) or any("женщина" in str(a) for a in addon['кто живёт в настоящий момент'][mate])) and not any("Женщины" in a for a in params['mates']) and any("Мужчины" in a for a in params['mates']):
                         raise Exception
-                    if (any("мужчина" in a for a in [mate]) or any("мужчина" in str(a) for a in  addon['кто живёт в настоящий момент'][mate])) and not any("Мужчины" in a for a in params['mates']):
+                    if (any("мужчина" in a for a in [mate]) or any("мужчина" in str(a) for a in  addon['кто живёт в настоящий момент'][mate])) and not any("Мужчины" in a for a in params['mates']) and any("Женщины" in a for a in params['mates']):
                         raise Exception 
                     
                 else:
@@ -234,7 +253,7 @@ def parse_addon(addon, params, good_description):
         except:
             pass
         if a !=0:
-            if any("Один" in a for a in params['mates']) and int(addon['сколько комнат в квартире']) > 2:
+            if any("Один" in a for a in params['mates']) and not any("одного" in a for a in params['mates']) and int(addon['сколько комнат в квартире']) > 2:
                 print(addon)
                 print("komnat v kvartire" + str(addon['сколько комнат в квартире']))
                 raise Exception
@@ -247,7 +266,8 @@ def parse_addon(addon, params, good_description):
        # else:
             #import pdb;pdb.set_trace()
         #    raise Exception 
-        both_net = "нет" in addon['ищут ли одного человека'] and ("нет" in addon['ищут ли двух человек']) and not any("двое" in a for a in params['sex'])
+        all_net_general = "нет" in addon['ищут ли одного человека'] and ("нет" in addon['ищут ли двух человек'])
+        all_net = (("нет" in addon["ищут ли пару из мужчины и женщины"]) and ("нет" in addon["ищут ли пару женщин/девушек"]) and "нет" in addon["ищут ли пару мужчин/парней"]  and "нет" in addon['ищут ли одного мужчину/парня'] and "нет" in addon['ищут ли одну женщину/девушку'])
         user_man = any("Муж" in a for a in params['sex']) and not any("Жен" in a for a in params['sex']) and not any("двое" in a for a in params['sex'])
         user_woman = not any("Муж" in a for a in params['sex']) and  any("Жен" in a for a in params['sex']) and not any("двое" in a for a in params['sex'])
         
@@ -259,11 +279,11 @@ def parse_addon(addon, params, good_description):
             raise Exception
         if (user_pair or user_guys or user_girls) and (not "да" in addon['ищут ли двух человек']) and "да" in addon['ищут ли одного человека']:
             raise Exception
-        if user_pair and "нет" in addon["ищут ли пару из мужчины и женщины"]:
+        if user_pair and "нет" in addon["ищут ли пару из мужчины и женщины"] and not all_net:
                 raise Exception
-        if user_guys and "нет" in addon["ищут ли пару мужчин/парней"]:
+        if user_guys and "нет" in addon["ищут ли пару мужчин/парней" ] and not all_net:
             raise Exception
-        if user_girls and "нет" in addon["ищут ли пару женщин/девушек"]:
+        if user_girls and "нет" in addon["ищут ли пару женщин/девушек"] and not all_net:
             raise Exception
         if user_girls and ("не указано" in addon["ищут ли пару женщин/девушек"]) and (("да" in addon["ищут ли пару мужчин/парней"]) or "да" in addon["ищут ли пару из мужчины и женщины"] or "да" in addon['ищут ли одного мужчину/парня'] or "да" in addon['ищут ли одну женщину/девушку']):
             raise Exception
@@ -271,7 +291,8 @@ def parse_addon(addon, params, good_description):
             raise Exception
         if user_pair and "не указано" in addon["ищут ли пару из мужчины и женщины"] and (("да" in addon["ищут ли пару женщин/девушек"]) or "да" in addon["ищут ли пару мужчин/парней"]  or "да" in addon['ищут ли одного мужчину/парня'] or "да" in addon['ищут ли одну женщину/девушку']):
             raise Exception
-        
+        if "не указано" in addon['ищут ли двух человек'] and not any("Жен" in a for a in params['sex']) and not any("Муж" in a for a in params['sex']) and any("двое" in a for a in params['sex']) and ("да" in addon['ищут ли одного мужчину/парня'] or "да" in addon['ищут ли одну женщину/девушку']):
+            raise Exception
         if not user_man and not user_woman and "да" in addon['ищут ли двух человек'] and any("двое" in a for a in params['sex']):
             
             pass   
@@ -349,6 +370,21 @@ def main():
     def callback_query(call):
       #  import pdb; pdb.set_trace()
         global TINY_DB
+        if "i am" in call.data:
+            all_params = load_parameters()
+            params = all_params[str(call.message.chat.id)]
+            #params = get_chat_parameters(call.message.chat.id)
+            if "no" in call.data:
+                params['answered'] = 0
+                bot.send_message(call.message.chat.id, "Спасибо за отзыв. Пожалуйста, напишите о проблемах в работе боат в личные сообщения @milkicow, это поможет боту дальше развиваться")
+            else:
+                params['answered'] = 1
+                bot.send_message(call.message.chat.id, "Спасибо за отзыв. Я очень рад, что сервис вам нравится, о любых недочётах можете написать в личные сообщения @milkicow, тогда вы поможете боту развиваться и дальше.")
+            
+            all_params[str(call.message.chat.id)] = params
+            save_parameters(params=all_params)
+        
+            print("here" + str(call.message.chat.id))
         if 'startstart' in call.data:
             start_start(call.message)
         if 'sex' in call.data:
@@ -436,7 +472,7 @@ def main():
         if 'animal' in call.data:
         #import pdb; pdb.set_trace()
             keyboard = types.InlineKeyboardMarkup()
-            list = [types.InlineKeyboardButton('Показывать объявления где про животных ничего не сказано', callback_data='animal 2'), types.InlineKeyboardButton('Собака🦮' , callback_data='animal 1'), types.InlineKeyboardButton('Кошка 🐈‍⬛', callback_data='animal 0')]
+            list = [types.InlineKeyboardButton('Собака🦮' , callback_data='animal 1'), types.InlineKeyboardButton('Кошка 🐈‍⬛', callback_data='animal 0')]
             
             if call.data.split()[1] == "continue":
                 old_start(call.message)
@@ -526,7 +562,7 @@ def main():
         keyboard = types.InlineKeyboardMarkup()
         button_bar = types.InlineKeyboardButton('Приступим🏃‍♀️🏃🚴‍♂️', callback_data='startstart') 
         keyboard.add(button_bar)
-        bot.send_message(message.chat.id, "Привет, я бот, который с помощью искуственного интеллекта будет обрабатывать описания новых объявлений на *Циане (по Москве)* и присылать те, которые подходят под ваш запрос (например, возможности проживания с кошкой) *в течение 3-х минут* после их публикации.\n\nПроект находится на стадии разработки, поэтому *для поиска доступны только комнаты!*\n\nДля начала нужно заполнить анкету, приступим?", reply_markup=keyboard, parse_mode= 'Markdown')
+        bot.send_message(message.chat.id, "Привет, я бот, который с помощью искуственного интеллекта будет обрабатывать описания новых объявлений на *Циане (по Москве)* и присылать те, которые подходят под ваш запрос (например, возможности проживания с кошкой) *в течение 3-х минут* после их публикации.\n\nПроект находится на стадии разработки, поэтому *для поиска доступны только комнаты!*\n\nДля начала нужно заполнить анкету, приступим? \n @KvartiraDar - поддержка, обратная связь", reply_markup=keyboard, parse_mode= 'Markdown')
         
         
     
@@ -574,11 +610,9 @@ def main():
         keyboard = types.InlineKeyboardMarkup()
         button_bar = types.InlineKeyboardButton('Кошка 🐈‍⬛', callback_data='animal 0')
         button_bar2 = types.InlineKeyboardButton('Собака 🦮', callback_data='animal 1')
-        button_bar4 = types.InlineKeyboardButton('Показывать объявления где про животных ничего не сказано', callback_data='animal 2')
+        
         keyboard.add(button_bar)
         keyboard.add(button_bar2)
-        
-        keyboard.add(button_bar4)
         button_bar = types.InlineKeyboardButton('Пропустить', callback_data='animal continue')
         keyboard.add(button_bar)   
         TINY_DB[message.chat.id]['animal_input'] = [False, False]
