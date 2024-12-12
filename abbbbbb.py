@@ -328,6 +328,7 @@ def parse( i_min, i_max, preload=False, room1=1, room2=0, no_room=False):
                             raise Sent
         except Sent:
             pass
+
 #parse(2,25,room1=1,room2=1, no_room=True, preload=True) # NO ROOOOOOOOM!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #parse(2,25,room1=1,room2=1, no_room=False, preload=True)   # YES ROOOOOOM!!!!!!!!!!!!!!!!!!!!!
 while True:
@@ -339,5 +340,19 @@ while True:
     print("skipped " + str(skipped))
     skipped = 0
     time.sleep(15)
+    
+    while True:
+        try:
+
+            with open("123123.json", 'r', encoding='utf-8') as file:
+                filefile =  json.load(file)
+                filefile[len(list(filefile.keys()))] = 2
+            
+            with open("123123.json", "w", encoding='utf-8') as new_file:       
+                json.dump(filefile, new_file, ensure_ascii=False, indent = 6)
+            break
+        except:
+            pass
+    
    ## except:
    #     print("error!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")

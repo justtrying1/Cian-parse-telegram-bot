@@ -61,8 +61,14 @@ def send_request(desc, data, type):
         data['messages'][0]['content'] = data['messages'][0]['content'].format(stroka, desc)
     except:
         pass
-    response = requests.post(url, headers=headers, data=json.dumps(data), proxies=proxies)
+    while True:
+
+        try:
+            response = requests.post(url, headers=headers, data=json.dumps(data), proxies=proxies)
+            break
     #print(data['messages'][0]['content'])
+        except:
+            pass
     # Проверка статуса ответа
     if response.status_code == 200:
         # Парсинг JSON-ответа

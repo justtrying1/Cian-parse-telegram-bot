@@ -220,7 +220,7 @@ def filter_ads(ads, criteria):
 
 def parse_addon(addon, params, good_description):
     addon = addon[0]
-    if any("двое" in a for a in params['sex']) and not any("Муж" in a for a in params['sex']) or not any ("Жен" in a for a in params['sex']):
+    if any("двое" in a for a in params['sex']) and (not any("Муж" in a for a in params['sex']) or not any ("Жен" in a for a in params['sex'])):
         params['sex'] = params['sex'] + ["Мужчина", "Женщина"]
     if not any("Один" in a for a in params['mates']) and not any("одного" in a for a in params['mates']):
         params['mates'].append("одного")
@@ -253,7 +253,7 @@ def parse_addon(addon, params, good_description):
         except:
             pass
         if a !=0:
-            if any("Один" in a for a in params['mates']) and not any("одного" in a for a in params['mates']) and int(addon['сколько комнат в квартире']) > 2:
+            if any("Один" in a for a in params['mates']) and not any("одного" in a for a in params['mates']) and int(addon['сколько комнат в квартире']) > 2 and any("не указано" in a for a in addon['кто живёт в настоящий момент']):
                 print(addon)
                 print("komnat v kvartire" + str(addon['сколько комнат в квартире']))
                 raise Exception
@@ -275,9 +275,9 @@ def parse_addon(addon, params, good_description):
         user_guys =  any("Муж" in a for a in params['sex']) and not any("Жен" in a for a in params['sex']) and any("двое" in a for a in params['sex'])
         user_girls = not any("Муж" in a for a in params['sex']) and  any("Жен" in a for a in params['sex']) and any("двое" in a for a in params['sex'])
         
-        if (user_man or user_woman) and (not "да" in addon['ищут ли одного человека']) and "да" in addon['ищут ли двух человек']:
+        if (user_man or user_woman) and (not "да" in addon['ищут ли одного человека'] and (not "да" in addon['ищут ли одного мужчину/парня']) and not "да" in addon['ищут ли одну женщину/девушку']) and "да" in addon['ищут ли двух человек']:
             raise Exception
-        if (user_pair or user_guys or user_girls) and (not "да" in addon['ищут ли двух человек']) and "да" in addon['ищут ли одного человека']:
+        if (user_pair or user_guys or user_girls) and (not "да" in addon['ищут ли двух человек'] and ("не" in addon["ищут ли пару из мужчины и женщины"]) and ("не" in addon["ищут ли пару женщин/девушек"]) and "не" in addon["ищут ли пару мужчин/парней"]) and "да" in addon['ищут ли одного человека']:
             raise Exception
         if user_pair and "нет" in addon["ищут ли пару из мужчины и женщины"] and not all_net:
                 raise Exception

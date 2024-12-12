@@ -48,5 +48,9 @@ addon =  [
                               "ищут ли пару женщин/девушек": "нет",
                               "ищут ли пару мужчин/парней": "нет"
                         }
-                  ]#import pdb; pdb.set_trace()
+                  ]#import pdb; pdb.set_trace()s
+                  
+import pdb;
+pdb.set_trace()
 print(parse_addon(addon, params, "good_description"))
+print(params)
