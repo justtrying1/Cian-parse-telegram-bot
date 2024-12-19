@@ -137,18 +137,21 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
     flag = False
     while True:
        # import pdb; pdb.set_trace()
-        try:
-            res = session.get(url_base(page=page), headers={'Accept-Language': 'en'})
-        except:
-            continue
-        list_soup = bs4.BeautifulSoup(res.text, "html.parser")
-        offers = list_soup.select("article[data-name='CardComponent']")
-        if (res.url.find("p=1&") != -1) & (page != 1):
-         
-            flag = True
-         
-            page = page - 1
-            res = session.get(url_base(page=page))     
+        with cloudscraper.create_scraper() as session:
+
+            try:
+            
+                res = session.get(url_base(page=page), headers={'Accept-Language': 'en'})
+            except:
+                continue
+            list_soup = bs4.BeautifulSoup(res.text, "html.parser")
+            offers = list_soup.select("article[data-name='CardComponent']")
+            if (res.url.find("p=1&") != -1) & (page != 1):
+            
+                flag = True
+            
+                page = page - 1
+                res = session.get(url_base(page=page))     
         list_soup = bs4.BeautifulSoup(res.text, "html.parser")
         offers = list_soup.select("article[data-name='CardComponent']")
         if(offers == []):
