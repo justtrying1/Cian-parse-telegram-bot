@@ -22,6 +22,7 @@ import ai
 from ai import data_ as dt
 from ai import chain_prompt
 from telegrambot import save_cache
+import tracemalloc
 class Sent(Exception): pass
 skipped = 0
 def offer_list_updated(offer_list ,disappeared, appeared):
@@ -154,6 +155,7 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
             time.sleep(3)
             print(0)
             get_urls(i, min_price=i*5000, room1=room1, room2=room2, max_price=((i+1)*5000)-1, city=city, room3=room3, deal_type="rent",no_room=no_room, preload=preload)
+            
             return
         for offer in offers:
                 common_data = dict()
@@ -328,9 +330,11 @@ def parse( i_min, i_max, preload=False, room1=1, room2=0, no_room=False):
                             raise Sent
         except Sent:
             pass
-
+import traceback
+import gc
 #parse(2,25,room1=1,room2=1, no_room=True, preload=True) # NO ROOOOOOOOM!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #parse(2,25,room1=1,room2=1, no_room=False, preload=True)   # YES ROOOOOOM!!!!!!!!!!!!!!!!!!!!!
+tracemalloc.start()
 while True:
     then = datetime.now()
     parse(2,10,room1=0,room2=0, no_room=True)    
@@ -340,19 +344,9 @@ while True:
     print("skipped " + str(skipped))
     skipped = 0
     time.sleep(15)
-    
-    while True:
-        try:
-
-            with open("123123.json", 'r', encoding='utf-8') as file:
-                filefile =  json.load(file)
-                filefile[len(list(filefile.keys()))] = 2
-            
-            with open("123123.json", "w", encoding='utf-8') as new_file:       
-                json.dump(filefile, new_file, ensure_ascii=False, indent = 6)
-            break
-        except:
-            pass
+    print(tracemalloc.get_traced_memory())
+    gc.collect()
+   
     
    ## except:
    #     print("error!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
