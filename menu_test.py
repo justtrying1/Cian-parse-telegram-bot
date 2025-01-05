@@ -32,13 +32,14 @@ def load_action():
     
 @bot.message_handler(commands=['buy'])
 def buy(message):
-
+    bot.send_invoice(
+        message.chat.id, """При покупке подписки вы получаете""")
     # Пример товара
-    title = "Товар"
-    description = "Описание товара"
+    title = "Подписка на сервис"
+    description = """Подходящие под Вас объявления с Циана✅ В течение 3-х минут после появления✅ Экономьте время и будьте первыми"""
     payload = "CUSTOM_PAYLOAD"  # Содержимое, которое будет отправлено обратно
     currency = "XTR"  # Валюта
-    prices = [telebot.types.LabeledPrice("Товар", 1)]  # Цена в копейках (10.00 USD)
+    prices = [telebot.types.LabeledPrice("Двухнедельная подписка", 250)]  
 
     # Отправка запроса на оплату
     bot.send_invoice(
@@ -55,33 +56,64 @@ def buy(message):
         is_flexible=False,
         prices = prices
     )
+
 @bot.pre_checkout_query_handler(func=lambda query: True)
 def checkout(pre_checkout_query):
     bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True,
-                                  error_message="Aliens tried to steal your card's CVV, but we successfully protected your credentials,"
-                                                " try to pay again in a few minutes, we need a small rest.")
+                                  error_message="Произошла ошибка")
 
+@bot.message_handler(commands=['subscription'])
+def get_subscription_state(message):
+    all_params = load_parameters()
+    now = datetime.now()
+    test_sub = all_params[str(message.chat.id)]['test_subscription']
+    if "subscription" in all_params[str(message.chat.id)]:
+        
+        sub = all_params[str(message.chat.id)]['subscription']
+    else:
+        sub = 0
+    msg = ""
+    if (datetime.strptime(test_sub, '%Y-%m-%d %H:%M:%S') - now).total_seconds() > 0:
+        msg = msg+"Тестовая подписка активна до {}".format(test_sub) + "\n"
+    else:
+        msg = msg + "Тестовая подписка истекла {}".format(test_sub) + "\n"
+    if sub != 0:
+        if (datetime.strptime(sub, '%Y-%m-%d %H:%M:%S') - now).total_seconds() > 0:
+            msg = msg + "Подписка активна до {}".format(test_sub) + "\n"
+        else:
+            msg = msg + "Подписка истекла {}".format(test_sub) + "\n"
+    
+
+    bot.send_message(message.chat.id, all_params[str(message.chat.id)]['subscription'])
 
 @bot.message_handler(content_types=['successful_payment'])
 def got_payment(message):
     bot.send_message(message.chat.id,
-                     'Hoooooray! Thanks for payment! We will proceed your order for `{} {}` as fast as possible! '
-                     'Stay in touch.\n\nUse /buy again to get a Time Machine for your friend!'.format(
-                         message.successful_payment.total_amount / 100, message.successful_payment.currency),
-                     parse_mode='Markdown')
+                     'Ваш заказ выполнен, теперь ваша подписка активна, срок окончания подписки можно узнать с помощью команды /subscription')
+                     
 @bot.message_handler(commands=['refund'])
 def refund_asked(message):
-    msg = bot.send_message(message.chat.id, "asdfasfd")
-    bot.register_next_step_handler(msg, a)
+    if message.from_user.id == 7494874190:
+        bot.send_message(message.chat.id, "asdfasfd")
+        bot.register_next_step_handler(message, lambda msg : a(msg))
+
+def activate_test_subscription(chat_id: str):
+    all_params = load_parameters()
+    all_params[chat_id]['test_subscription'] = datetime.now() + datetime.timedelta(days=3)
+    save_parameters(all_params)
+
+    bot.send_message(int(chat_id), "Ваша трёхдневная подписка активирована")
 def a(message):
-    msg = message
-    bot.refund_star_payment(msg.from_user.id, msg.text)
+    user_id = int(message.text)
+    bot.refund_star_payment(user_id, "refund")
 
 @bot.message_handler(commands=['transactions'])
 def get_stars(message):
-    for i in bot.get_star_transactions().transactions:
-        print(i) 
-    bot.send_message(message.chat.id, str(bot.get_star_transactions()))                     
+    print(message.from_user.id)
+    if message.from_user.id == 7494874190:
+        for i in bot.get_star_transactions().transactions:
+            print(i) 
+        bot.send_message(message.chat.id, str(bot.get_star_transactions()))                     
     
 
 def save_action(chat_id, action_name):
