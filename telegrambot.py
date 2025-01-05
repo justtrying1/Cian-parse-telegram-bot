@@ -230,7 +230,7 @@ def parse_addon(addon, params, good_description):
     if "сколько людей живёт в настоящий момент в квартире" in addon:
         addon["сколько людей живёт в настоящий момент в квартире?"] = addon["сколько людей живёт в настоящий момент в квартире"] 
     try:
-        if ("не ука" in str(addon["сколько людей живёт в настоящий момент в квартире?"])) or (addon["сколько людей живёт в настоящий момент в квартире?"] == 0) or (any("одного" in a for a in params['mates'])) or (((len(list([addon['кто живёт в настоящий момент'].values()]))) == 1) and any("Один" in a for a in params['mates'])):
+        if ("не ука" in str(addon["сколько людей живёт в настоящий момент в квартире?"])) or (addon["сколько людей живёт в настоящий момент в квартире?"] <=1 ) or (any("одного" in a for a in params['mates'])) or (((len(list(addon['кто живёт в настоящий момент'].values()))) == 1) and any("Один" in a for a in params['mates'])):
             #import pdb;pdb.set_trace()
             print(len(list(addon['кто живёт в настоящий момент'].values())))
             mates = addon['кто живёт в настоящий момент']

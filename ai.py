@@ -24,6 +24,7 @@ data_ = {
     'messages': [ {'role': 'user', 'content': r"{0} {1}"}
     ]
 }
+import traceback
 # Отправка POST-запроса с использованием прокси
 def send_request(desc, data, type):
     if type == 0:
@@ -53,8 +54,8 @@ def send_request(desc, data, type):
             Вот сам текст объявления: """
    
     proxies = {
-        'http': 'http://UefPe7:oebC72@196.18.166.178:8000',
-        'https': 'http://UefPe7:oebC72@196.18.166.178:8000'
+        'http': 'http://uYUsZ2:fQjcse@193.41.123.78:8000',
+        'https': 'http://uYUsZ2:fQjcse@193.41.123.78:8000'
     }
         
     try:
@@ -68,7 +69,8 @@ def send_request(desc, data, type):
             break
     #print(data['messages'][0]['content'])
         except:
-            pass
+            
+            print(traceback.format_exc())
     # Проверка статуса ответа
     if response.status_code == 200:
         # Парсинг JSON-ответа
