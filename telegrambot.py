@@ -127,7 +127,7 @@ def save_cache(appeared):
                        
                     
                     elif chat_id == 7494874190:
-                        
+                        bot.send_message(chat_id="@meowmepo", text=ad['good_description']+"\n" + msg)
                         bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n")
 
                 if parsed_count > 0: 
@@ -391,7 +391,7 @@ def main():
             
             keyboard = types.InlineKeyboardMarkup()
            # list = [types.InlineKeyboardButton('Двухкомнатные квартиры', callback_data='start 2'), types.InlineKeyboardButton('Однокомнатные квартиры', callback_data='start 1'), types.InlineKeyboardButton('Комнаты', callback_data='start 0')]
-            list = [types.InlineKeyboardButton('Нас двое', callback_data='sex 2'), types.InlineKeyboardButton('Мужчина🤵‍♂️', callback_data='sex 1'), types.InlineKeyboardButton('Женщина👩‍🦱', callback_data='sex 0')]
+            list = [types.InlineKeyboardButton('Нас двое', callback_data='sex 3'), types.InlineKeyboardButton('Я один', callback_data='sex 2'), types.InlineKeyboardButton('Мужчина🤵‍♂️', callback_data='sex 1'), types.InlineKeyboardButton('Женщина👩‍🦱', callback_data='sex 0')]
             
             if call.data.split()[1] == "continue":
                 get_mates(call.message)
@@ -574,9 +574,11 @@ def main():
         keyboard.add(button_bar)
         button_bar = types.InlineKeyboardButton('Мужчина🤵‍♂️', callback_data='sex 1') 
         keyboard.add(button_bar)
-        button_bar = types.InlineKeyboardButton('Нас двое', callback_data='sex 2') 
+        button_bar = types.InlineKeyboardButton('Я один', callback_data='sex 2') 
         keyboard.add(button_bar)
-        TINY_DB[message.chat.id]['sex_input'] = [False, False, False]
+        button_bar = types.InlineKeyboardButton('Нас двое', callback_data='sex 3') 
+        keyboard.add(button_bar)
+        TINY_DB[message.chat.id]['sex_input'] = [False, False, False, False]
         bot.send_message(message.chat.id, "Для начала выберите ваш пол, даже если вас двое.\n Вы будете получать объявления, в которых собственник ищет людей вашего пола, с учётом вашего количества.\nМожно выбрать несколько.", reply_markup=keyboard)
     
     
