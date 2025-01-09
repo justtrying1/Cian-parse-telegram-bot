@@ -16,7 +16,7 @@ TINY_DB = {}
 # Путь к локальному JSON-файлу
 #JSON_FILE_PATH = 'ads.json'  # Укажите путь к вашему локальному JSON-файлу
 last_ads = set()  # Используем множество для хранения уникальных URL объявлений
-PARAMS_FILE = "params.json"
+PARAMS_FILE = "test_params.json"
 CACHE_FILE = "cache.json"
 ACTION_FILE = "action"
 ACTION_FILE = "{ACTION_FILE}{date}.json".format(ACTION_FILE=ACTION_FILE, date=datetime.now().strftime('%Y-%m-%d %H-%M'))
@@ -30,8 +30,13 @@ def load_action():
     except:
         return {}
     
+@bot.message_handler(commands=['msgmsg'])
+def msg(message):
+    bot.send_message(chat_id="@meowmepo", text="123123")
+
 @bot.message_handler(commands=['buy'])
 def buy(message):
+    
     bot.send_invoice(
         message.chat.id, """При покупке подписки вы получаете""")
     # Пример товара
@@ -73,18 +78,18 @@ def get_subscription_state(message):
     else:
         sub = 0
     msg = ""
-    if (datetime.strptime(test_sub, '%Y-%m-%d %H:%M:%S') - now).total_seconds() > 0:
+    if (datetime.strptime(test_sub, '%d-%m-%Y  %H:%M:%S') - now).total_seconds() > 0:
         msg = msg+"Тестовая подписка активна до {}".format(test_sub) + "\n"
     else:
         msg = msg + "Тестовая подписка истекла {}".format(test_sub) + "\n"
     if sub != 0:
-        if (datetime.strptime(sub, '%Y-%m-%d %H:%M:%S') - now).total_seconds() > 0:
+        if (datetime.strptime(sub, '%d-%m-%Y  %H:%M:%S') - now).total_seconds() > 0:
             msg = msg + "Подписка активна до {}".format(test_sub) + "\n"
         else:
             msg = msg + "Подписка истекла {}".format(test_sub) + "\n"
     
 
-    bot.send_message(message.chat.id, all_params[str(message.chat.id)]['subscription'])
+    bot.send_message(message.chat.id, msg)
 
 @bot.message_handler(content_types=['successful_payment'])
 def got_payment(message):
@@ -97,12 +102,17 @@ def refund_asked(message):
         bot.send_message(message.chat.id, "asdfasfd")
         bot.register_next_step_handler(message, lambda msg : a(msg))
 
-def activate_test_subscription(chat_id: str):
+@bot.message_handler(commands=['test_subscription'])
+def activate_test_subscription(message):
+    #import pdb; pdb.set_trace()
+    chat_id = str(message.chat.id)
     all_params = load_parameters()
-    all_params[chat_id]['test_subscription'] = datetime.now() + datetime.timedelta(days=3)
+    all_params[chat_id]['test_subscription'] = (datetime.now() + timedelta(days=3)).strftime('%d-%m-%Y  %H:%M:%S')
+    
     save_parameters(all_params)
 
-    bot.send_message(int(chat_id), "Ваша трёхдневная подписка активирована")
+    bot.send_message(int(message.chat.id), "Ваша трёхдневная подписка активирована")
+
 def a(message):
     user_id = int(message.text)
     bot.refund_star_payment(user_id, "refund")

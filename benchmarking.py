@@ -8,7 +8,7 @@ try:
         l = json.load(file)
 except:
     l = []
-with open("benchmarking.json", 'r', encoding='utf-8') as file:
+with open("desc_bench.json", 'r', encoding='utf-8') as file:
     desc_json = json.load(file)
 
 for desc in desc_json[100:150]:
