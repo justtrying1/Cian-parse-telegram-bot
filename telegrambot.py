@@ -54,6 +54,7 @@ def load_cache():
        a = json.load(file)
     return a
 
+
 def save_cache(appeared):
   #  print(len(appeared))
     all_params = load_parameters()
@@ -740,18 +741,48 @@ def main():
             'period': TINY_DB[message.chat.id]['period_input']
         }
         
-
+        
         save_parameters(all_params)  
+        ads_to_filter = []
+        ads = load_ads()
+        for segment in ads:
         
+            for ad in ads[segment][-200:]:
+                
+                if 'addon' in ad:
+                    ads_to_filter = ads_to_filter + [ad]
         
-        bot.send_message(message.chat.id, "Ваши параметры сохранены. Я буду уведомлять вас о новых объявлениях.")
+        import pdb; pdb.set_trace()
+        params = load_parameters()
+        params = all_params[str(message.chat.id)]
+        filtered_ads = filter_ads(ads_to_filter, params)
         
+        for ad in filtered_ads[-20:]:
+            msg = f"""{ad['title']}
+🚇Метро: {ad['underground']} {ad['metro_dist']}
+🧍‍♂️Автор: {ad['author_type']}
+💸Цена: {ad['price_per_month']}₽
+🏘Район: {ad['district']}
+🔗Источник: {ad['url']}\n
+    """
+            if 'addon' in ad:
+                parsed_addon = parse_addon(ad['addon'], params=params, good_description=ad['good_description'])
+                msg = msg + parsed_addon  
+                        #  import pdb; pdb.set_trace()
+            else:
+                parsed_addon = ""
+    
+            if parsed_addon != "":
+                bot.send_message(message.chat.id, msg)
+        bot.send_message(message.chat.id, "Вот некоторые объявления, которые могут подойти под ваш запрос, также я буду уведомлять Вас о всех новых объявлениях, как только они появятся.")
+                
+
     bot.polling(none_stop=True)
-                        
+               
     #import threading
     #threading.Thread(target=watch_json_file, daemon=True).start()
-
-
+def send_greeting_ads():
+    pass
     # Запуск бота
 if __name__ == '__main__':
     while True:
