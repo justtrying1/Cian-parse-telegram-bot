@@ -108,7 +108,6 @@ def save_cache(appeared):
 🧍‍♂️Автор: {ad['author_type']}
 💸Цена: {ad['price_per_month']}₽
 🏘Район: {ad['district']}
-🛏Количество комнат: {ad.get('rooms_count', 'не указано')}
 🔗Источник: {ad['url']}\n
 """
                     if 'addon' in ad:
@@ -122,12 +121,13 @@ def save_cache(appeared):
                     if parsed_addon != "":
                         parsed_count = parsed_count + 1 
                         print("addon parsed!")
-                        
+                        if chat_id == 7494874190:
+                            bot.send_message(chat_id="@FlatoonChat", text=ad['good_description']+"\n" + msg)
                         bot.send_message(chat_id, msg, reply_markup=keyboard)
                        
                     
                     elif chat_id == 7494874190:
-                        bot.send_message(chat_id="@meowmepo", text=ad['good_description']+"\n" + msg)
+                        bot.send_message(chat_id="@FlatoonChat", text=ad['good_description']+"\n" + msg)
                         bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n")
 
                 if parsed_count > 0: 
@@ -138,9 +138,9 @@ def save_cache(appeared):
                     keyboard.add(button_bar2)
                     if "answered" not in all_params.get(i).keys():
 
-                        bot.send_message(bot.send_message(chat_id, text='Нравится ли вам сервис?', reply_markup=keyboard))
+                        bot.send_message(chat_id, text='Нравится ли вам сервис?', reply_markup=keyboard)
                     bot.send_message(chat_id, text='Появилось {} новых объявления по вашему запросу, чтобы поменять параметры воспользуйтесь командой /start\n'    
-                                    "@KvartiraDar - канал для обратной связи".format(str(parsed_count)))
+                                    "t.me/FlatoonChat - канал со всеми объявлениями".format(str(parsed_count)))
                 
             except:
               #  if chat_id == 7494874190:

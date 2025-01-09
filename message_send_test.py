@@ -21,11 +21,13 @@ d = load_parameters()
 b = 1
 
 for i in list(d.values()):
-    
+    #print(len(list(d.values())))
     try:
-        print(i['sex'])
-        bot.send_message(i['chat_id'], "Я случайно удалил ровно половину пользовательских данных :) поэтому если у вас есть знакомые которые пользовались ботом, то скажите им об этом, если вы получили это сообщение, значит ваши данные у меня остались. ")
+        #pass
+        bot.send_message(i['chat_id'], "test ")
     except Exception as e:
-        
-        print(e)
+        #print(i['sex'])
+        b= b+1
+        #print(e)
+
 print(b)
