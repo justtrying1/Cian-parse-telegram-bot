@@ -225,12 +225,13 @@ def parse_addon(addon, params, good_description):
         params['sex'] = params['sex'] + ["Мужчина", "Женщина"]
     if not any("Один" in a for a in params['mates']) and not any("одного" in a for a in params['mates']):
         params['mates'].append("одного")
-    if "не указано" in addon['можно ли заселиться с животными'] and not any("про животных" in a for a in params['animal']) and params['animal'] != []:
-        raise Exception
+
     flag = True
     if "сколько людей живёт в настоящий момент в квартире" in addon:
         addon["сколько людей живёт в настоящий момент в квартире?"] = addon["сколько людей живёт в настоящий момент в квартире"] 
     try:
+        if "не указано" in addon['можно ли заселиться с животными'] and not any("про животных" in a for a in params['animal']) and params['animal'] != []:
+            raise Exception
         if ("не ука" in str(addon["сколько людей живёт в настоящий момент в квартире?"])) or (addon["сколько людей живёт в настоящий момент в квартире?"] <=1 ) or (any("одного" in a for a in params['mates'])) or (((len(list(addon['кто живёт в настоящий момент'].values()))) == 1) and any("Один" in a for a in params['mates'])):
             #import pdb;pdb.set_trace()
             print(len(list(addon['кто живёт в настоящий момент'].values())))
@@ -320,7 +321,8 @@ def parse_addon(addon, params, good_description):
             pass  
         if not user_man and not user_woman and "да" in addon['ищут ли двух человек'] and not any("двое" in a for a in params['sex']):
             raise Exception
-        if (any("кошка" in a for a in addon['можно ли заселиться с животными']) and any("Кошка" in a for a in params['animal'])) or (any("cобака" in a for a in addon['можно ли заселиться с животными']) and any("Собака" in a for a in params['animal'])) or any("да" in a for a in addon['можно ли заселиться с животными']) or "не " in addon['можно ли заселиться с животными']:
+       # import pdb; pdb.set_trace()
+        if (any("кошка" in a for a in addon['можно ли заселиться с животными']) and any("Кошка" in a for a in params['animal'])) or (("cоба"in addon['можно ли заселиться с животными']) and any("Собака" in a for a in params['animal'])) or ("да" in addon['можно ли заселиться с животными']) or "не " in addon['можно ли заселиться с животными']:
             pass
         elif params['animal'] != []:
             #import pdb;pdb.set_trace()
@@ -745,6 +747,7 @@ def main():
         save_parameters(all_params)  
         ads_to_filter = []
         ads = load_ads()
+        do_flag = False
         for segment in ads:
         
             for ad in ads[segment][-200:]:
@@ -752,15 +755,17 @@ def main():
                 if 'addon' in ad:
                     ads_to_filter = ads_to_filter + [ad]
         
-       # import pdb; pdb.set_trace()
+        #import pdb; pdb.set_trace()
         params = load_parameters()
         params = all_params[str(message.chat.id)]
         filtered_ads = filter_ads(ads_to_filter, params)
         
         for ad in filtered_ads[-20:]:
+            
             msg = f"""{ad['title']}
 🚇Метро: {ad['underground']} {ad['metro_dist']}
 🧍‍♂️Автор: {ad['author_type']}
+Количество комнат: {ad['rooms_count']}
 💸Цена: {ad['price_per_month']}₽
 🏘Район: {ad['district']}
 🔗Источник: {ad['url']}\n
@@ -771,11 +776,14 @@ def main():
                         #  import pdb; pdb.set_trace()
             else:
                 parsed_addon = ""
-    
+            
             if parsed_addon != "":
                 bot.send_message(message.chat.id, msg)
-        bot.send_message(message.chat.id, "Вот некоторые объявления, которые могут подойти под ваш запрос, также я буду уведомлять Вас о всех новых объявлениях, как только они появятся. \n t.me/FlatoonChat - все-все-все объявления")
-                
+                do_flag = True
+        if do_flag:
+            bot.send_message(message.chat.id, "Вот некоторые объявления, которые могут подойти под ваш запрос, также я буду уведомлять Вас о всех новых объявлениях, как только они появятся. \n t.me/FlatoonChat - все-все-все объявления")
+        else:
+            bot.send_message(message.chat.id, "К сожалению по вашему запросу не нашлось недавних объявлений. \n t.me/FlatoonChat - все объявления")
 
     bot.polling(none_stop=True)
                
