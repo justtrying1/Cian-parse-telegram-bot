@@ -113,7 +113,7 @@ def save_cache(appeared):
 """
                     if 'addon' in ad:
                         parsed_addon = parse_addon(ad['addon'], params=all_params.get(i), good_description=ad['good_description'])
-                        msg = msg + parsed_addon  
+                        msg = parsed_addon + msg    
                   #  import pdb; pdb.set_trace()
                     else:
                         parsed_addon = ""
@@ -123,7 +123,7 @@ def save_cache(appeared):
                         parsed_count = parsed_count + 1 
                         print("addon parsed!")
                         if chat_id == 7494874190:
-                            bot.send_message(chat_id="@FlatoonChat", text=ad['good_description']+"\n" + msg)
+                            bot.send_message(chat_id="@FlatoonChat", text= msg)
                         bot.send_message(chat_id, msg, reply_markup=keyboard)
                        
                     
@@ -320,7 +320,7 @@ def parse_addon(addon, params, good_description):
             pass  
         if not user_man and not user_woman and "да" in addon['ищут ли двух человек'] and not any("двое" in a for a in params['sex']):
             raise Exception
-        if (any("кошка" in a for a in addon['можно ли заселиться с животными']) and any("Кошка" in a for a in params['animal'])) or (any("cобака" in a for a in addon['можно ли заселиться с животными']) and any("Собака" in a for a in params['animal'])) or "да" in addon['можно ли заселиться с животными'] or "не " in addon['можно ли заселиться с животными']:
+        if (any("кошка" in a for a in addon['можно ли заселиться с животными']) and any("Кошка" in a for a in params['animal'])) or (any("cобака" in a for a in addon['можно ли заселиться с животными']) and any("Собака" in a for a in params['animal'])) or any("да" in a for a in addon['можно ли заселиться с животными']) or "не " in addon['можно ли заселиться с животными']:
             pass
         elif params['animal'] != []:
             #import pdb;pdb.set_trace()
@@ -752,7 +752,7 @@ def main():
                 if 'addon' in ad:
                     ads_to_filter = ads_to_filter + [ad]
         
-        import pdb; pdb.set_trace()
+       # import pdb; pdb.set_trace()
         params = load_parameters()
         params = all_params[str(message.chat.id)]
         filtered_ads = filter_ads(ads_to_filter, params)
@@ -774,7 +774,7 @@ def main():
     
             if parsed_addon != "":
                 bot.send_message(message.chat.id, msg)
-        bot.send_message(message.chat.id, "Вот некоторые объявления, которые могут подойти под ваш запрос, также я буду уведомлять Вас о всех новых объявлениях, как только они появятся.")
+        bot.send_message(message.chat.id, "Вот некоторые объявления, которые могут подойти под ваш запрос, также я буду уведомлять Вас о всех новых объявлениях, как только они появятся. \n t.me/FlatoonChat - все-все-все объявления")
                 
 
     bot.polling(none_stop=True)
