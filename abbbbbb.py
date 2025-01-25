@@ -192,6 +192,8 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
                     common_data['description'] = offer.select('div[data-name="Description"]')[0].select("p")[0].text
                     common_data['url'] = offer.select("div[data-name='LinkArea']")[0].select("a")[0].get('href')
                     common_data['time'] = datetime.today().strftime('%Y-%m-%d %H-%M-%S')
+                    common_data['geolabel'] = offer.select("a[data-name=GeoLabel]")[1].text
+        
                     location_data = define_location_data(offer, False)
                     price_data = price
                     author_data = define_author(offer)

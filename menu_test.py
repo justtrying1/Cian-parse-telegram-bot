@@ -34,17 +34,18 @@ def load_action():
 def msg(message):
     bot.send_message(chat_id="@meowmepo", text="123123")
 
+
 @bot.message_handler(commands=['buy'])
 def buy(message):
-    
-    bot.send_invoice(
-        message.chat.id, """При покупке подписки вы получаете""")
+    if message.from_user.id == 7494874190:
+        activate_subscription(message)
+
     # Пример товара
     title = "Подписка на сервис"
     description = """Подходящие под Вас объявления с Циана✅ В течение 3-х минут после появления✅ Экономьте время и будьте первыми"""
     payload = "CUSTOM_PAYLOAD"  # Содержимое, которое будет отправлено обратно
     currency = "XTR"  # Валюта
-    prices = [telebot.types.LabeledPrice("Двухнедельная подписка", 250)]  
+    prices = [telebot.types.LabeledPrice("Двухнедельная подписка", 100)] 
 
     # Отправка запроса на оплату
     bot.send_invoice(
@@ -68,31 +69,43 @@ def checkout(pre_checkout_query):
                                   error_message="Произошла ошибка")
 
 @bot.message_handler(commands=['subscription'])
+def check_subscription(message):
+    state, msg = get_subscription_state(message)
+    bot.send_message(message.chat.id, msg)
+        
+        
 def get_subscription_state(message):
     all_params = load_parameters()
     now = datetime.now()
-    test_sub = all_params[str(message.chat.id)]['test_subscription']
+    msg = ""
     if "subscription" in all_params[str(message.chat.id)]:
         
         sub = all_params[str(message.chat.id)]['subscription']
     else:
-        sub = 0
-    msg = ""
-    if (datetime.strptime(test_sub, '%d-%m-%Y  %H:%M:%S') - now).total_seconds() > 0:
-        msg = msg+"Тестовая подписка активна до {}".format(test_sub) + "\n"
-    else:
-        msg = msg + "Тестовая подписка истекла {}".format(test_sub) + "\n"
-    if sub != 0:
-        if (datetime.strptime(sub, '%d-%m-%Y  %H:%M:%S') - now).total_seconds() > 0:
-            msg = msg + "Подписка активна до {}".format(test_sub) + "\n"
-        else:
-            msg = msg + "Подписка истекла {}".format(test_sub) + "\n"
+        sub = all_params[str(message.chat.id)]['test_subscription']
     
+    if (datetime.strptime(sub, '%d-%m-%Y  %H:%M:%S') - now).total_seconds() > 0:
+        
+        msg = msg + "Подписка активна до {}".format(sub) + "\n"
+        return True, msg
+    else:
+        msg = msg + "Подписка истекла {}".format(sub) + "\n"
+        return False, msg
+   
 
-    bot.send_message(message.chat.id, msg)
+def activate_subscription(message):
+    chat_id = str(message.chat.id)
+    all_params = load_parameters()
+
+    all_params[chat_id]['subscription'] = (datetime.now() + timedelta(days=14)).strftime('%d-%m-%Y  %H:%M:%S')
+    
+    save_parameters(all_params)
+
+    bot.send_message(int(message.chat.id), "Ваша двухнедельная подписка активирована")
 
 @bot.message_handler(content_types=['successful_payment'])
 def got_payment(message):
+    print("someone bought something")
     bot.send_message(message.chat.id,
                      'Ваш заказ выполнен, теперь ваша подписка активна, срок окончания подписки можно узнать с помощью команды /subscription')
                      
@@ -105,13 +118,18 @@ def refund_asked(message):
 @bot.message_handler(commands=['test_subscription'])
 def activate_test_subscription(message):
     #import pdb; pdb.set_trace()
+    
     chat_id = str(message.chat.id)
     all_params = load_parameters()
-    all_params[chat_id]['test_subscription'] = (datetime.now() + timedelta(days=3)).strftime('%d-%m-%Y  %H:%M:%S')
-    
-    save_parameters(all_params)
+    if 'test_subscription' not in all_params[chat_id]:
 
-    bot.send_message(int(message.chat.id), "Ваша трёхдневная подписка активирована")
+        all_params[chat_id]['test_subscription'] = (datetime.now() + timedelta(days=3)).strftime('%d-%m-%Y  %H:%M:%S')
+        
+        save_parameters(all_params)
+
+        bot.send_message(int(message.chat.id), "Ваша трёхдневная подписка активирована")
+    else:
+        bot.send_message(int(message.chat.id), "Вы уже использовали активацию тестовой подписки")
 
 def a(message):
     user_id = int(message.text)

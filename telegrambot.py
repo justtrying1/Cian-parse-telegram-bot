@@ -36,6 +36,114 @@ def load_action():
         return {}
     
 
+@bot.message_handler(commands=['buy'])
+def buy(message):
+    if message.from_user.id == 7494874190:
+        activate_subscription(message)
+
+    # Пример товара
+    title = "Подписка на сервис"
+    description = """Подходящие под Вас объявления с Циана✅ В течение 3-х минут после появления✅ Экономьте время и будьте первыми"""
+    payload = "CUSTOM_PAYLOAD"  # Содержимое, которое будет отправлено обратно
+    currency = "XTR"  # Валюта
+    prices = [telebot.types.LabeledPrice("Двухнедельная подписка", 100)] 
+
+    # Отправка запроса на оплату
+    bot.send_invoice(
+        chat_id=message.chat.id,
+        title=title,
+        description=description,
+        currency=currency,
+        invoice_payload=payload,
+        provider_token=None,
+        photo_url=None,
+        photo_size=None,
+        photo_width=None,
+        photo_height=None,
+        is_flexible=False,
+        prices = prices
+    )
+
+@bot.pre_checkout_query_handler(func=lambda query: True)
+def checkout(pre_checkout_query):
+    bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True,
+                                  error_message="Произошла ошибка")
+
+@bot.message_handler(commands=['subscription'])
+def check_subscription(message):
+    state, msg = get_subscription_state(message.chat.id)
+    bot.send_message(message.chat.id, msg)
+        
+        
+def get_subscription_state(chat_id):
+    all_params = load_parameters()
+    now = datetime.now()
+    msg = ""
+    if "subscription" in all_params[str(chat_id)]:
+        
+        sub = all_params[str(chat_id)]['subscription']
+    else:
+        sub = all_params[str(chat_id)]['test_subscription']
+    
+    if (datetime.strptime(sub, '%d-%m-%Y  %H:%M:%S') - now).total_seconds() > 0:
+        
+        msg = msg + "Подписка активна до {}".format(sub) + "\n"
+        return True, msg
+    else:
+        msg = msg + "Подписка истекла {}".format(sub) + "\n"
+        return False, msg
+   
+
+def activate_subscription(message):
+    chat_id = str(message.chat.id)
+    all_params = load_parameters()
+
+    all_params[chat_id]['subscription'] = (datetime.now() + timedelta(days=14)).strftime('%d-%m-%Y  %H:%M:%S')
+    
+    save_parameters(all_params)
+
+    bot.send_message(int(message.chat.id), "Ваша двухнедельная подписка активирована")
+
+@bot.message_handler(content_types=['successful_payment'])
+def got_payment(message):
+    print("someone bought something")
+    bot.send_message(message.chat.id,
+                     'Ваш заказ выполнен, теперь ваша подписка активна, срок окончания подписки можно узнать с помощью команды /subscription')
+                     
+@bot.message_handler(commands=['refund'])
+def refund_asked(message):
+    if message.from_user.id == 7494874190:
+        bot.send_message(message.chat.id, "asdfasfd")
+        bot.register_next_step_handler(message, lambda msg : a(msg))
+
+@bot.message_handler(commands=['test_subscription'])
+def activate_test_subscription(message):
+    #import pdb; pdb.set_trace()
+    
+    chat_id = str(message.chat.id)
+    all_params = load_parameters()
+    if 'test_subscription' not in all_params[chat_id]:
+
+        all_params[chat_id]['test_subscription'] = (datetime.now() + timedelta(days=3)).strftime('%d-%m-%Y  %H:%M:%S')
+        
+        save_parameters(all_params)
+
+        bot.send_message(int(message.chat.id), "Ваша трёхдневная подписка активирована")
+    else:
+        bot.send_message(int(message.chat.id), "Вы уже использовали активацию тестовой подписки")
+
+def a(message):
+    user_id = int(message.text)
+    bot.refund_star_payment(user_id, "refund")
+
+@bot.message_handler(commands=['transactions'])
+def get_stars(message):
+    print(message.from_user.id)
+    if message.from_user.id == 7494874190:
+        for i in bot.get_star_transactions().transactions:
+            print(i) 
+        bot.send_message(message.chat.id, str(bot.get_star_transactions()))    
+
 def save_action(chat_id, action_name):
     #import pdb; pdb.set_trace()
     action = load_action()
@@ -118,13 +226,19 @@ def save_cache(appeared):
                     else:
                         parsed_addon = ""
                     
-                    
+                    sub_flag = False
                     if parsed_addon != "":
                         parsed_count = parsed_count + 1 
                         print("addon parsed!")
                         if chat_id == 7494874190:
                             bot.send_message(chat_id="@FlatoonChat", text= msg)
-                        bot.send_message(chat_id, msg, reply_markup=keyboard)
+                        if "test_subscription" not in all_params[i]:
+                            sub_flag = True
+                        elif get_subscription_state(chat_id):
+                            bot.send_message(chat_id, msg, reply_markup=keyboard)   
+                        else:
+                            sub_flag = True
+                
                        
                     
                     elif chat_id == 7494874190:
@@ -137,11 +251,15 @@ def save_cache(appeared):
                     keyboard = types.InlineKeyboardMarkup()
                     keyboard.add(button_bar)
                     keyboard.add(button_bar2)
-                    if "answered" not in all_params.get(i).keys():
+                    
+                    if sub_flag:
+                        bot.send_message(chat_id, "Активируйте тестовую подписку с помощью /test_subscription или приобретите двухнедельную подписку с помощью команды /buy")
+                    else:
+                        if "answered" not in all_params.get(i).keys():
 
-                        bot.send_message(chat_id, text='Нравится ли вам сервис?', reply_markup=keyboard)
-                    bot.send_message(chat_id, text='Появилось {} новых объявления по вашему запросу, чтобы поменять параметры воспользуйтесь командой /start\n'    
-                                    "t.me/FlatoonChat - канал со всеми объявлениями".format(str(parsed_count)))
+                            bot.send_message(chat_id, text='Нравится ли вам сервис?', reply_markup=keyboard)
+                        bot.send_message(chat_id, text='Появилось {} новых объявления по вашему запросу, чтобы поменять параметры воспользуйтесь командой /start\n'    
+                                        "t.me/FlatoonChat - канал со всеми объявлениями".format(str(parsed_count)))
                 
             except:
               #  if chat_id == 7494874190:
@@ -194,12 +312,12 @@ def filter_ads(ads, criteria):
                 if criteria['author_type'] == "Владелец" and ad['author_type'] == "Владелец":
                     try:
                         if (metro_dist <= criteria['metro_dist'] + 8 and room_criteria['min_price'] <= ad['price_per_month'] <= room_criteria['max_price'] and
-                            ad['rooms_count'] == room_criteria['rooms'] and list(filter(re.compile ( criteria['undergrounds'] ).match, ad['underground']))):
+                            ad['rooms_count'] == room_criteria['rooms'] and (list(filter(re.compile ( criteria['undergrounds'] ).match, ad['underground'])) or list(filter(re.compile ( criteria['geolabel'] ).match, ad['underground'])) )):
                             filtered.append(ad)
                     except:    
                         if (metro_dist <= criteria['metro_dist'] + 8 and room_criteria['min_price'] <= ad['price_per_month'] <= room_criteria['max_price'] and
                             ad['rooms_count'] == room_criteria['rooms'] and
-                            (list(filter(re.compile(ad['underground']).match, criteria['undergrounds'])))):
+                            ((list(filter(re.compile(ad['underground']).match, criteria['undergrounds']) or list(filter(re.compile ( ad['underground'] ).match, criteria['geolabel'])))))):
                         
                                 filtered.append(ad)
                 elif criteria['author_type'] != "Владелец":
@@ -680,7 +798,8 @@ def main():
                 keyboard = types.InlineKeyboardMarkup()
                 button_bar = types.InlineKeyboardButton('Пропустить', callback_data='undergrounds continue')
                 keyboard.add(button_bar)  
-                bot.send_message(message.chat.id, "Теперь укажите станцию метро с большой буквы (или несколько через запятую, также с большой буквы).", reply_markup=keyboard)
+                bot.send_message(message.chat.id, "Теперь укажите автономный округ или станцию метро с большой буквы пример: (СЗАО, САО, Маяковская, Алексеевская)", reply_markup=keyboard)
+                
                 bot.register_next_step_handler(message, lambda msg: get_undergrounds(msg))
         except ValueError:
             bot.send_message(message.chat.id, "Пожалуйста, введите корректное число.")
@@ -784,7 +903,7 @@ def main():
             bot.send_message(message.chat.id, "Вот некоторые объявления, которые могут подойти под ваш запрос, также я буду уведомлять Вас о всех новых объявлениях, как только они появятся. \n t.me/FlatoonChat - все-все-все объявления")
         else:
             bot.send_message(message.chat.id, "К сожалению по вашему запросу не нашлось недавних объявлений. \n t.me/FlatoonChat - все объявления")
-
+        bot.send_message(message.chat.id, "Для активации тестовой подписки используйте команду /test_subscription")
     bot.polling(none_stop=True)
                
     #import threading
