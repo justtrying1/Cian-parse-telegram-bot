@@ -119,7 +119,7 @@ def refund_asked(message):
 @bot.message_handler(commands=['test_subscription'])
 def activate_test_subscription(message):
     #import pdb; pdb.set_trace()
-    
+    print("test sub activated")
     chat_id = str(message.chat.id)
     all_params = load_parameters()
     if 'test_subscription' not in all_params[chat_id]:
@@ -164,12 +164,13 @@ def load_cache():
 
 
 def save_cache(appeared):
-  #  print(len(appeared))
+  
     all_params = load_parameters()
     sent_list = {}
     cache = load_cache()
-    print(all_params.keys())
+
     for i in all_params.keys():
+       # import pdb; pdb.set_trace()
         if all_params[i] == {}:
             try:
                 #bot.send_message(int(i), "Уважаемый пользователь, ваши данные были утеряны всвязи с техничискими неполадками, чтобы и дальше получать новые объявления пожалуйста пройдите заново регистрацию с помощью команды /start")
@@ -181,10 +182,10 @@ def save_cache(appeared):
         chat_id = all_params.get(i)['chat_id']
         new_filtered_ads = filter_ads(appeared, all_params.get(i))
         sent_list[chat_id] = str(len(new_filtered_ads))
-       # print(str(len(new_filtered_ads)) + "длина появившихся")
+       
         if str(chat_id) not in cache.keys():
             cache[str(chat_id)] = {}
-      #  print(i)
+      
         try:
             if isinstance(cache[str(chat_id)]['last 20'], list):
                 cache[str(chat_id)]['last 20'] = {}
@@ -244,7 +245,8 @@ def save_cache(appeared):
                     elif chat_id == 7494874190:
                         bot.send_message(chat_id="@FlatoonChat", text=ad['good_description']+"\n" + msg)
                         bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n")
-
+            
+                
                 if parsed_count > 0: 
                     button_bar = types.InlineKeyboardButton('Да', callback_data="i am here")
                     button_bar2 = types.InlineKeyboardButton('Нет', callback_data="i am no")
@@ -266,7 +268,7 @@ def save_cache(appeared):
                    # import pdb; pdb.set_trace()
                 print(traceback.format_exc())
                 
-            save_action("sent", sent_list)
+           # save_action("sent", sent_list)
         while True:
             try:
                 with open(CACHE_FILE, "w+", encoding='utf-8') as file:
@@ -312,23 +314,23 @@ def filter_ads(ads, criteria):
                 if criteria['author_type'] == "Владелец" and ad['author_type'] == "Владелец":
                     try:
                         if (metro_dist <= criteria['metro_dist'] + 8 and room_criteria['min_price'] <= ad['price_per_month'] <= room_criteria['max_price'] and
-                            ad['rooms_count'] == room_criteria['rooms'] and (list(filter(re.compile ( criteria['undergrounds'] ).match, ad['underground'])) or list(filter(re.compile ( criteria['geolabel'] ).match, ad['underground'])) )):
+                            ad['rooms_count'] == room_criteria['rooms'] and (list(filter(re.compile ( criteria['undergrounds'] ).match, ad['underground'])) or list(filter(re.compile ( criteria['undergronuds'] ).match, ad['geolabel'])) )):
                             filtered.append(ad)
                     except:    
                         if (metro_dist <= criteria['metro_dist'] + 8 and room_criteria['min_price'] <= ad['price_per_month'] <= room_criteria['max_price'] and
                             ad['rooms_count'] == room_criteria['rooms'] and
-                            ((list(filter(re.compile(ad['underground']).match, criteria['undergrounds']) or list(filter(re.compile ( ad['underground'] ).match, criteria['geolabel'])))))):
+                            ((list(filter(re.compile(ad['underground']).match, criteria['undergrounds']) or list(filter(re.compile ( ad['geolabel'] ).match, criteria['undergrounds'])))))):
                         
                                 filtered.append(ad)
                 elif criteria['author_type'] != "Владелец":
                     try:
                         if (metro_dist < criteria['metro_dist'] and room_criteria['min_price'] <= ad['price_per_month'] <= room_criteria['max_price'] and
-                            ad['rooms_count'] == room_criteria['rooms'] and list(filter(re.compile ( criteria['undergrounds'] ).match, ad['underground']))):
+                            ad['rooms_count'] == room_criteria['rooms'] and (list(filter(re.compile ( criteria['undergrounds'] ).match, ad['underground'])) or list(filter(re.compile ( criteria['undergronuds'] ).match, ad['geolabel'])))):
                             filtered.append(ad)
                     except:    
                         if (metro_dist < criteria['metro_dist'] and room_criteria['min_price'] <= ad['price_per_month'] <= room_criteria['max_price'] and
                             ad['rooms_count'] == room_criteria['rooms'] and
-                            (list(filter(re.compile(ad['underground']).match, criteria['undergrounds'])))):
+                            (list(filter(re.compile(ad['underground']).match, criteria['undergrounds'])))or list(filter(re.compile ( ad['geolabel'] ).match, criteria['undergrounds']))):
                         
                                 filtered.append(ad)
                 elif criteria['author_type'] == "Владелец" and ad['author_type'] != "Владелец":
@@ -348,6 +350,8 @@ def parse_addon(addon, params, good_description):
     if "сколько людей живёт в настоящий момент в квартире" in addon:
         addon["сколько людей живёт в настоящий момент в квартире?"] = addon["сколько людей живёт в настоящий момент в квартире"] 
     try:
+        
+        
         if "не указано" in addon['можно ли заселиться с животными'] and not any("про животных" in a for a in params['animal']) and params['animal'] != []:
             raise Exception
         if ("не ука" in str(addon["сколько людей живёт в настоящий момент в квартире?"])) or (addon["сколько людей живёт в настоящий момент в квартире?"] <=1 ) or (any("одного" in a for a in params['mates'])) or (((len(list(addon['кто живёт в настоящий момент'].values()))) == 1) and any("Один" in a for a in params['mates'])):
@@ -667,7 +671,7 @@ def main():
 
         if "cian.ru" in call.data:
             try:
-                save_action(call.message.chat.id, 'desc')
+               # save_action(call.message.chat.id, 'desc')
                 print(call.message.chat.id)
                 #import pdb; pdb.set_trace()
                 a = load_cache()
@@ -744,7 +748,7 @@ def main():
     def old_start(message):
         #TINY_DB[message.chat.id] = {}
         TINY_DB[message.chat.id]['state'] = 'start'
-        save_action( message.chat.id, 'start')
+        #save_action( message.chat.id, 'start')
         keyboard = types.InlineKeyboardMarkup()
         button_bar = types.InlineKeyboardButton('Комнаты ', callback_data='start 0')
         keyboard.add(button_bar)
@@ -784,7 +788,7 @@ def main():
             bot.send_message(message.chat.id, "Пожалуйста, введите корректное число.")
 
     def get_max_price(message, next_, rooms):
-        save_action(message.chat.id, 'max_price')
+        #save_action(message.chat.id, 'max_price')
         try:
             max_price = int(message.text)
             if max_price < 500:

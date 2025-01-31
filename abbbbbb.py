@@ -28,15 +28,15 @@ skipped = 0
 def offer_list_updated(offer_list ,disappeared, appeared):
    
     for d in disappeared:
-        print(d)
+        pass
     for i in range(len(disappeared)):
         for j in range(len(offer_list)):
             if offer_list[j]['url'] == disappeared[i]['url']:
                 offer_list.pop(j)
-                print(len(offer_list))
+                
                 break
    
-    print("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+   
     return offer_list + appeared
 
 
@@ -56,7 +56,7 @@ def city_dict():
     city_dict = dict()
     for i in CITIES:
         city_dict[i[0]] = i[1]
-    print(city_dict["Москва"])
+    
     return city_dict
 city_dict = city_dict()
 
@@ -103,7 +103,7 @@ def filter_out(offer_list, old, i, break_flag):
                         break_flag = True
                     if any(d['url'] == offer_list[j]['url'] for d in old[str(i)]):
                             offer_list.pop(j)
-                            print(len(offer_list))
+                            
                             break
 
 
@@ -156,7 +156,7 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
         offers = list_soup.select("article[data-name='CardComponent']")
         if(offers == []):
             time.sleep(3)
-            print(0)
+            print("0")
             get_urls(i, min_price=i*5000, room1=room1, room2=room2, max_price=((i+1)*5000)-1, city=city, room3=room3, deal_type="rent",no_room=no_room, preload=preload)
             
             return
@@ -192,7 +192,10 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
                     common_data['description'] = offer.select('div[data-name="Description"]')[0].select("p")[0].text
                     common_data['url'] = offer.select("div[data-name='LinkArea']")[0].select("a")[0].get('href')
                     common_data['time'] = datetime.today().strftime('%Y-%m-%d %H-%M-%S')
-                    common_data['geolabel'] = offer.select("a[data-name=GeoLabel]")[1].text
+                    try:
+                        common_data['geolabel'] = offer.select("a[data-name=GeoLabel]")[1].text
+                    except:
+                        common_data['geolabel'] = ".*"
         
                     location_data = define_location_data(offer, False)
                     price_data = price
@@ -229,17 +232,17 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
                                 break_flag = True
                             if any(d['url'] == offer_list[j]['url'] for d in old[str(i)]):
                                     offer_list.pop(j)
-                                    print(len(offer_list))
+                                   
                                     break
         print(datetime.now())
         page += 1
         url_list = list(dict.fromkeys(url_list))
-        print(len(url_list))
-        print(res.url)    
+       
+        
         if(flag or (page == 4) or break_flag): 
             if preload:
                 #filter_out(offer_list, old, i, break_flag)
-                print(datetime.now())
+                
                 if len(offer_list) > 0:
                     if any(d['url'] == offer_list[-1]['url'] for d in old[str(i)]):  
                         flag1 = False  
@@ -272,7 +275,7 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
     ]
 }
             
-            print(page)
+            
             offer_list = list({v['url']:v for v in offer_list}.values())
 
             global offer_list_global
@@ -281,7 +284,7 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
 
 
 def parse( i_min, i_max, preload=False, room1=1, room2=0, no_room=False):
-    print("room2 = "+str(room2))
+
     first_time = True
                         
     global offer_list_global
@@ -312,13 +315,14 @@ def parse( i_min, i_max, preload=False, room1=1, room2=0, no_room=False):
                             #import pdb; pdb.set_trace() 
                             flagger = False  
                             old_json[str(i)] = offer_list_updated(offer_list=old_json[str(i)], disappeared=disappeared, appeared=offer_list_global[str(i)]) 
-                            print(offer_list_global[str(i)])
+                            
                             
                             if(not flagger and len(offer_list_global[str(i)]) > 0 and not preload):       
                                 print(2)
                                 #import pdb; pdb.set_trace()
                                # pass
                                 save_cache(offer_list_global[str(i)][:-len(offer_list_global[str(i)])+50])
+                            
                             while True:
                                 try:
                                     print(3)
