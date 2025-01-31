@@ -873,7 +873,7 @@ def main():
         do_flag = False
         for segment in ads:
         
-            for ad in ads[segment][-200:]:
+            for ad in ads[segment][-7:]:
                 
                 if 'addon' in ad:
                     ads_to_filter = ads_to_filter + [ad]
@@ -883,7 +883,7 @@ def main():
         params = all_params[str(message.chat.id)]
         filtered_ads = filter_ads(ads_to_filter, params)
         
-        for ad in filtered_ads[-20:]:
+        for ad in filtered_ads[-30:]:
             
             msg = f"""{ad['title']}
 🚇Метро: {ad['underground']} {ad['metro_dist']}
