@@ -233,7 +233,7 @@ def save_cache(appeared):
                         print("addon parsed!")
                         if chat_id == 7494874190:
                             bot.send_message(chat_id="@FlatoonChat", text= msg)
-                        if "test_subscription" not in all_params[i]:
+                        if "test_subscription" not in all_params[i] & "subscription" not in all_params[i]:
                             sub_flag = True
                         elif get_subscription_state(chat_id):
                             bot.send_message(chat_id, msg, reply_markup=keyboard)   
