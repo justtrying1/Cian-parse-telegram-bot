@@ -310,6 +310,8 @@ def filter_ads(ads, criteria):
     filtered = []
     for ad in ads:       
         for room_criteria in criteria['rooms']:
+            if ad['underground'] == "":
+                ad['underground'] = "не указано"
             try:
                 dodo = (criteria['metro_dist'])
             except KeyError:
@@ -639,7 +641,7 @@ def main():
                 bot.clear_step_handler_by_chat_id(chat_id=call.message.chat.id)
                 check_undergrounds(call.message)
             if 'retry' in call.data:
-                bot.send_message(call.message.chat.id, "Укажите автономный округ или станцию метро *через запятую*, пример: (СЗАО, САО, Маяковская, Алексеевская")
+                bot.send_message(call.message.chat.id, "*Через запятую* укажите автономный округ или станцию метро , пример: (СЗАО, САО, Маяковская, Алексеевская")
                 bot.register_next_step_handler(call.message, lambda msg: get_undergrounds(msg))
                 
         if 'max' in call.data:
@@ -835,15 +837,16 @@ def main():
             undergrounds_input = message.text.split(',')
     
             TINY_DB[message.chat.id]['undergrounds'] = [station.strip() for station in undergrounds_input]
+            keyboard = types.InlineKeyboardMarkup()
+            button_bar = types.InlineKeyboardButton('Да', callback_data='check_under yes')
+            keyboard.add(button_bar) 
+            
+            button_bar = types.InlineKeyboardButton('Ввести заново', callback_data='check_under retry')
+            keyboard.add(button_bar)
+            bot.send_message(message.chat.id, "Вы ввели следующие параметры: "+ str(TINY_DB[message.chat.id]['undergrounds']), reply_markup=keyboard)
         else :
             TINY_DB[message.chat.id]['undergrounds']=".*"
-        keyboard = types.InlineKeyboardMarkup()
-        button_bar = types.InlineKeyboardButton('Да', callback_data='check_under yes')
-        keyboard.add(button_bar) 
-        
-        button_bar = types.InlineKeyboardButton('Ввести заново', callback_data='check_under retry')
-        keyboard.add(button_bar)
-        bot.send_message(message.chat.id, "Вы ввели следующие параметры: "+ str(TINY_DB[message.chat.id]['undergrounds']), reply_markup=keyboard)
+            check_undergrounds(message)
         
     def check_undergrounds(message, skip = False):
         
@@ -873,7 +876,7 @@ def main():
 
 
     def get_metro_dist(message, skip = False):
-       # import pdb; pdb.set_trace()
+       
         TINY_DB[message.chat.id]['period_input'] = ""
         bot.register_next_step_handler(message, lambda msg: start(msg))
         if not skip:
@@ -897,13 +900,15 @@ def main():
         
         
         save_parameters(all_params)  
-        ads_to_filter = []
+        ads_to_filter = {}
         ads = load_ads()
         do_flag = False
         for segment in ads:
         
             for ad in ads[segment][-100:]:  
                 if 'addon' in ad:
+                    if segment not in ads_to_filter:
+                        ads_to_filter[segment] = []
                     ads_to_filter[segment] = ads_to_filter[segment] + [ad]
 
         params = load_parameters()
@@ -911,27 +916,31 @@ def main():
         filtered_ads = {}
         for ads_segment in ads_to_filter:
             filtered_ads[ads_segment] = filter_ads(ads_to_filter[ads_segment], params)
-        
-        for ad in filtered_ads[-30:]:
-            
-            msg = f"""{ad['title']}
-🚇Метро: {ad['underground']} {ad['metro_dist']}
-🧍‍♂️Автор: {ad['author_type']}
-Количество комнат: {ad['rooms_count']}
-💸Цена: {ad['price_per_month']}₽
-🏘Район: {ad['district']}
-🔗Источник: {ad['url']}\n
-    """
-            if 'addon' in ad:
-                parsed_addon = parse_addon(ad['addon'], params=params, good_description=ad['good_description'])
-                msg = msg + parsed_addon  
-                        #  import pdb; pdb.set_trace()
-            else:
-                parsed_addon = ""
-            
-            if parsed_addon != "":
-                bot.send_message(message.chat.id, msg)
-                do_flag = True
+        for ads_segment in filtered_ads:
+            count = 0
+            for ad in filtered_ads[ads_segment][-100:]:
+                
+                msg = f"""{ad['title']}
+    🚇Метро: {ad['underground']} {ad['metro_dist']}
+    🧍‍♂️Автор: {ad['author_type']}
+    Количество комнат: {ad['rooms_count']}
+    💸Цена: {ad['price_per_month']}₽
+    🏘Район: {ad['district']}
+    🔗Источник: {ad['url']}\n
+        """
+                if 'addon' in ad:
+                    parsed_addon = parse_addon(ad['addon'], params=params, good_description=ad['good_description'])
+                    msg = msg + parsed_addon  
+                            #  import pdb; pdb.set_trace()
+                else:
+                    parsed_addon = ""
+                
+                if parsed_addon != "":
+                    bot.send_message(message.chat.id, msg)
+                    count = count + 1 
+                    do_flag = True
+                if count > 3 or (datetime.strptime(ad['time'], '%Y-%m-%d  %H-%M-%S') - datetime.now()).days > 10:
+                    break
         if do_flag:
             bot.send_message(message.chat.id, "Вот недавние объявления, которые могут подойти под ваш запрос, также я буду уведомлять Вас о всех новых объявлениях, как только они появятся. \n t.me/FlatoonChat - все-все-все объявления")
         else:
