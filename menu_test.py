@@ -10,16 +10,33 @@ from copy import deepcopy
 from telebot import types
 import traceback
 API_TOKEN = '7750825181:AAFQX41MSanCjkfvxzJm_isfZW-Zr7kgsQo'  # Замените на ваш токен
+
+#API_TOKEN = '7006315291:AAE_Nb6L-pNyVi5tFylMycjZnkAYrkkzyYs'  # Замените на ваш токен
+#API_TOKEN = '7535762439:AAFtiztp9pG3JsPnX7T7IRjuB6cQtqe5sno'
+JSON_FILE_PATH = '&rent&30000&40000&1 room&Москва&2024-09-30 22-40-46.json'
+import telebot
+import json
+import time
+import os
+import re
+import datetime
+from datetime import timedelta
+from datetime import datetime
+from copy import deepcopy
+from telebot import types
+import traceback
+
+#API_TOKEN = 'YOUR_API_TOKEN'  # Замените на ваш токен
 bot = telebot.TeleBot(API_TOKEN)
 
 TINY_DB = {}
 # Путь к локальному JSON-файлу
 #JSON_FILE_PATH = 'ads.json'  # Укажите путь к вашему локальному JSON-файлу
-last_ads = set()  # Используем множество для хранения уникальных URL объявлений
+#  # Используем множество для хранения уникальных URL объявлений
 PARAMS_FILE = "test_params.json"
 CACHE_FILE = "cache.json"
-ACTION_FILE = "action"
-ACTION_FILE = "{ACTION_FILE}{date}.json".format(ACTION_FILE=ACTION_FILE, date=datetime.now().strftime('%Y-%m-%d %H-%M'))
+ACTION_FILE = "actions"
+ACTION_FILE = "{ACTION_FILE}.json".format(ACTION_FILE=ACTION_FILE)
 def load_action():
     try:
         if os.path.exists(ACTION_FILE):
@@ -30,10 +47,6 @@ def load_action():
     except:
         return {}
     
-@bot.message_handler(commands=['msgmsg'])
-def msg(message):
-    bot.send_message(chat_id="@meowmepo", text="123123")
-
 
 @bot.message_handler(commands=['buy'])
 def buy(message):
@@ -70,19 +83,19 @@ def checkout(pre_checkout_query):
 
 @bot.message_handler(commands=['subscription'])
 def check_subscription(message):
-    state, msg = get_subscription_state(message)
+    state, msg = get_subscription_state(message.chat.id)
     bot.send_message(message.chat.id, msg)
         
         
-def get_subscription_state(message):
+def get_subscription_state(chat_id):
     all_params = load_parameters()
     now = datetime.now()
     msg = ""
-    if "subscription" in all_params[str(message.chat.id)]:
+    if "subscription" in all_params[str(chat_id)]:
         
-        sub = all_params[str(message.chat.id)]['subscription']
+        sub = all_params[str(chat_id)]['subscription']
     else:
-        sub = all_params[str(message.chat.id)]['test_subscription']
+        sub = all_params[str(chat_id)]['test_subscription']
     
     if (datetime.strptime(sub, '%d-%m-%Y  %H:%M:%S') - now).total_seconds() > 0:
         
@@ -118,7 +131,7 @@ def refund_asked(message):
 @bot.message_handler(commands=['test_subscription'])
 def activate_test_subscription(message):
     #import pdb; pdb.set_trace()
-    
+    print("test sub activated")
     chat_id = str(message.chat.id)
     all_params = load_parameters()
     if 'test_subscription' not in all_params[chat_id]:
@@ -141,8 +154,7 @@ def get_stars(message):
     if message.from_user.id == 7494874190:
         for i in bot.get_star_transactions().transactions:
             print(i) 
-        bot.send_message(message.chat.id, str(bot.get_star_transactions()))                     
-    
+        bot.send_message(message.chat.id, str(bot.get_star_transactions()))    
 
 def save_action(chat_id, action_name):
     #import pdb; pdb.set_trace()
@@ -150,28 +162,42 @@ def save_action(chat_id, action_name):
     if str(chat_id) not in action.keys():
         action[str(chat_id)] = {}
     action[str(chat_id)][datetime.now().strftime('%Y-%m-%d %H-%M-%S')] = action_name
-    
-    with open(ACTION_FILE, 'w', encoding='utf-8') as file:
-        json.dump(action, file, ensure_ascii=False)
+    if action_name == "i am here":
+        with open("heres.json", 'w', encoding='utf-8') as file:
+            json.dump(action, file, ensure_ascii=False)
+    else:
+        with open(ACTION_FILE, 'w', encoding='utf-8') as file:
+            json.dump(action, file, ensure_ascii=False)
     
 def load_cache():
     with open(CACHE_FILE, "r", encoding='utf-8') as file:
        a = json.load(file)
     return a
 
+
 def save_cache(appeared):
-  #  print(len(appeared))
+  
     all_params = load_parameters()
     sent_list = {}
     cache = load_cache()
+
     for i in all_params.keys():
+       # import pdb; pdb.set_trace()
+        if all_params[i] == {}:
+            try:
+                #bot.send_message(int(i), "Уважаемый пользователь, ваши данные были утеряны всвязи с техничискими неполадками, чтобы и дальше получать новые объявления пожалуйста пройдите заново регистрацию с помощью команды /start")
+                continue
+            except:
+                
+                print(traceback.format_exc())
+                continue
         chat_id = all_params.get(i)['chat_id']
         new_filtered_ads = filter_ads(appeared, all_params.get(i))
         sent_list[chat_id] = str(len(new_filtered_ads))
-       # print(str(len(new_filtered_ads)) + "длина появившихся")
+       
         if str(chat_id) not in cache.keys():
             cache[str(chat_id)] = {}
-      #  print(i)
+      
         try:
             if isinstance(cache[str(chat_id)]['last 20'], list):
                 cache[str(chat_id)]['last 20'] = {}
@@ -204,38 +230,55 @@ def save_cache(appeared):
 🧍‍♂️Автор: {ad['author_type']}
 💸Цена: {ad['price_per_month']}₽
 🏘Район: {ad['district']}
-🛏Количество комнат: {ad.get('rooms_count', 'не указано')}
 🔗Источник: {ad['url']}\n
 """
                     if 'addon' in ad:
                         parsed_addon = parse_addon(ad['addon'], params=all_params.get(i), good_description=ad['good_description'])
-                        msg = msg + parsed_addon
+                        msg = parsed_addon + msg    
                   #  import pdb; pdb.set_trace()
                     else:
                         parsed_addon = ""
                     
-
+                    sub_flag = False
                     if parsed_addon != "":
                         parsed_count = parsed_count + 1 
                         print("addon parsed!")
-                        bot.send_message(chat_id, msg, reply_markup=keyboard)
-                        #button_bar = types.InlineKeyboardButton('Изменить настройки поиска', callback_data="settings")
-                        keyboard = types.InlineKeyboardMarkup()
-                       # keyboard.add(button_bar)
+                        if chat_id == 7494874190:
+                            bot.send_message(chat_id="@FlatoonChat", text= msg)
+                        if "test_subscription" not in all_params[i] & "subscription" not in all_params[i]:
+                            sub_flag = True
+                        elif get_subscription_state(chat_id):
+                            bot.send_message(chat_id, msg, reply_markup=keyboard)   
+                        else:
+                            sub_flag = True
+                    
                     elif chat_id == 7494874190:
-                        
-                        bot.send_message(chat_id, ad['good_description']+"\n" + msg)
+                        bot.send_message(chat_id="@FlatoonChat", text=ad['good_description']+"\n" + msg)
+                        bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n")
+            
+                
+                if parsed_count > 0: 
+                    button_bar = types.InlineKeyboardButton('Да', callback_data="i am here")
+                    button_bar2 = types.InlineKeyboardButton('Нет', callback_data="i am no")
+                    keyboard = types.InlineKeyboardMarkup()
+                    keyboard.add(button_bar)
+                    keyboard.add(button_bar2)
+                    
+                    if sub_flag:
+                        bot.send_message(chat_id, "Активируйте тестовую подписку с помощью /test_subscription или приобретите двухнедельную подписку с помощью команды /buy")
+                    else:
+                        if "answered" not in all_params.get(i).keys():
 
-                if parsed_count > 0:
-                    bot.send_message(chat_id, text='Появилось {} новых объявления по вашему запросу, чтобы поменять параметры воспользуйтесь командой /start\n'    
-                                    "@KvartiraDar - канал про обновления".format(str(parsed_count)), reply_markup=keyboard)
+                            bot.send_message(chat_id, text='Нравится ли вам сервис?', reply_markup=keyboard)
+                        bot.send_message(chat_id, text='Появилось {} новых объявления по вашему запросу, чтобы поменять параметры воспользуйтесь командой /start\n'    
+                                        "t.me/FlatoonChat - канал со всеми объявлениями".format(str(parsed_count)))
                 
             except:
               #  if chat_id == 7494874190:
                    # import pdb; pdb.set_trace()
                 print(traceback.format_exc())
                 
-            save_action("sent", sent_list)
+           # save_action("sent", sent_list)
         while True:
             try:
                 with open(CACHE_FILE, "w+", encoding='utf-8') as file:
@@ -280,24 +323,24 @@ def filter_ads(ads, criteria):
             try:
                 if criteria['author_type'] == "Владелец" and ad['author_type'] == "Владелец":
                     try:
-                        if (metro_dist < criteria['metro_dist'] and room_criteria['min_price'] <= ad['price_per_month'] <= room_criteria['max_price'] and
-                            ad['rooms_count'] == room_criteria['rooms'] and list(filter(re.compile ( criteria['undergrounds'] ).match, ad['underground']))):
+                        if (metro_dist <= criteria['metro_dist'] + 8 and room_criteria['min_price'] <= ad['price_per_month'] <= room_criteria['max_price'] and
+                            ad['rooms_count'] == room_criteria['rooms'] and (list(filter(re.compile ( criteria['undergrounds'] ).match, ad['underground'])) or list(filter(re.compile ( criteria['undergronuds'] ).match, ad['geolabel'])) )):
                             filtered.append(ad)
                     except:    
-                        if (metro_dist < criteria['metro_dist'] and room_criteria['min_price'] <= ad['price_per_month'] <= room_criteria['max_price'] and
+                        if (metro_dist <= criteria['metro_dist'] + 8 and room_criteria['min_price'] <= ad['price_per_month'] <= room_criteria['max_price'] and
                             ad['rooms_count'] == room_criteria['rooms'] and
-                            (list(filter(re.compile(ad['underground']).match, criteria['undergrounds'])))):
+                            ((list(filter(re.compile(ad['underground']).match, list(map(lambda x: x.lower(),criteria['undergrounds']))) or list(filter(re.compile ( ad['geolabel'] ).match, list(map(lambda x: x.lower(),criteria['undergrounds'])))))))):
                         
                                 filtered.append(ad)
                 elif criteria['author_type'] != "Владелец":
                     try:
                         if (metro_dist < criteria['metro_dist'] and room_criteria['min_price'] <= ad['price_per_month'] <= room_criteria['max_price'] and
-                            ad['rooms_count'] == room_criteria['rooms'] and list(filter(re.compile ( criteria['undergrounds'] ).match, ad['underground']))):
+                            ad['rooms_count'] == room_criteria['rooms'] and (list(filter(re.compile ( criteria['undergrounds'] ).match, ad['underground'])) or list(filter(re.compile ( criteria['undergronuds'] ).match, ad['geolabel'])))):
                             filtered.append(ad)
                     except:    
                         if (metro_dist < criteria['metro_dist'] and room_criteria['min_price'] <= ad['price_per_month'] <= room_criteria['max_price'] and
                             ad['rooms_count'] == room_criteria['rooms'] and
-                            (list(filter(re.compile(ad['underground']).match, criteria['undergrounds'])))):
+                            (list(filter(re.compile(ad['underground']).match, list(map(lambda x: x.lower(),criteria['undergrounds'])))))or list(filter(re.compile ( ad['geolabel'] ).match, list(map(lambda x: x.lower(),criteria['undergrounds']))))):
                         
                                 filtered.append(ad)
                 elif criteria['author_type'] == "Владелец" and ad['author_type'] != "Владелец":
@@ -308,6 +351,8 @@ def filter_ads(ads, criteria):
 
 def parse_addon(addon, params, good_description):
     addon = addon[0]
+    if any("двое" in a for a in params['sex']) and (not any("Муж" in a for a in params['sex']) or not any ("Жен" in a for a in params['sex'])):
+        params['sex'] = params['sex'] + ["Мужчина", "Женщина"]
     if not any("Один" in a for a in params['mates']) and not any("одного" in a for a in params['mates']):
         params['mates'].append("одного")
 
@@ -315,16 +360,20 @@ def parse_addon(addon, params, good_description):
     if "сколько людей живёт в настоящий момент в квартире" in addon:
         addon["сколько людей живёт в настоящий момент в квартире?"] = addon["сколько людей живёт в настоящий момент в квартире"] 
     try:
-        if ("не ука" in str(addon["сколько людей живёт в настоящий момент в квартире?"])) or (addon["сколько людей живёт в настоящий момент в квартире?"] == 0) or (any("одного" in a for a in params['mates'])) or (((len([addon['кто живёт в настоящий момент'].values()])) == 1) and any("Один" in a for a in params['mates'])):
+        
+        
+        if "не указано" in addon['можно ли заселиться с животными'] and not any("про животных" in a for a in params['animal']) and params['animal'] != []:
+            raise Exception
+        if ("не ука" in str(addon["сколько людей живёт в настоящий момент в квартире?"])) or (addon["сколько людей живёт в настоящий момент в квартире?"] <=1 ) or (any("одного" in a for a in params['mates'])) or (((len(list(addon['кто живёт в настоящий момент'].values()))) == 1) and any("Один" in a for a in params['mates'])):
             #import pdb;pdb.set_trace()
             print(len(list(addon['кто живёт в настоящий момент'].values())))
             mates = addon['кто живёт в настоящий момент']
             for mate in mates:
                 if not any('никто' in a for a in  mates) or len(mates) != 1:
                 
-                    if (any("женщина" in a for a in [mate]) or any("женщина" in str(a) for a in addon['кто живёт в настоящий момент'][mate])) and not any("Женщины" in a for a in params['mates']):
+                    if (any("женщина" in a for a in [mate]) or any("женщина" in str(a) for a in addon['кто живёт в настоящий момент'][mate])) and not any("Женщины" in a for a in params['mates']) and any("Мужчины" in a for a in params['mates']):
                         raise Exception
-                    if (any("мужчина" in a for a in [mate]) or any("мужчина" in str(a) for a in  addon['кто живёт в настоящий момент'][mate])) and not any("Мужчины" in a for a in params['mates']):
+                    if (any("мужчина" in a for a in [mate]) or any("мужчина" in str(a) for a in  addon['кто живёт в настоящий момент'][mate])) and not any("Мужчины" in a for a in params['mates']) and any("Женщины" in a for a in params['mates']):
                         raise Exception 
                     
                 else:
@@ -338,7 +387,7 @@ def parse_addon(addon, params, good_description):
         except:
             pass
         if a !=0:
-            if any("Один" in a for a in params['mates']) and int(addon['сколько комнат в квартире']) > 2:
+            if any("Один" in a for a in params['mates']) and not any("одного" in a for a in params['mates']) and int(addon['сколько комнат в квартире']) > 2 and any("не указано" in a for a in addon['кто живёт в настоящий момент']):
                 print(addon)
                 print("komnat v kvartire" + str(addon['сколько комнат в квартире']))
                 raise Exception
@@ -351,7 +400,8 @@ def parse_addon(addon, params, good_description):
        # else:
             #import pdb;pdb.set_trace()
         #    raise Exception 
-        both_net = "нет" in addon['ищут ли одного человека'] and ("нет" in addon['ищут ли двух человек']) and not any("двое" in a for a in params['sex'])
+        all_net_general = "нет" in addon['ищут ли одного человека'] and ("нет" in addon['ищут ли двух человек'])
+        all_net = (("нет" in addon["ищут ли пару из мужчины и женщины"]) and ("нет" in addon["ищут ли пару женщин/девушек"]) and "нет" in addon["ищут ли пару мужчин/парней"]  and "нет" in addon['ищут ли одного мужчину/парня'] and "нет" in addon['ищут ли одну женщину/девушку'])
         user_man = any("Муж" in a for a in params['sex']) and not any("Жен" in a for a in params['sex']) and not any("двое" in a for a in params['sex'])
         user_woman = not any("Муж" in a for a in params['sex']) and  any("Жен" in a for a in params['sex']) and not any("двое" in a for a in params['sex'])
         
@@ -359,15 +409,15 @@ def parse_addon(addon, params, good_description):
         user_guys =  any("Муж" in a for a in params['sex']) and not any("Жен" in a for a in params['sex']) and any("двое" in a for a in params['sex'])
         user_girls = not any("Муж" in a for a in params['sex']) and  any("Жен" in a for a in params['sex']) and any("двое" in a for a in params['sex'])
         
-        if (user_man or user_woman) and (not "да" in addon['ищут ли одного человека']) and "да" in addon['ищут ли двух человек']:
+        if (user_man or user_woman) and (not "да" in addon['ищут ли одного человека'] and (not "да" in addon['ищут ли одного мужчину/парня']) and not "да" in addon['ищут ли одну женщину/девушку']) and "да" in addon['ищут ли двух человек']:
             raise Exception
-        if (user_pair or user_guys or user_girls) and (not "да" in addon['ищут ли двух человек']) and "да" in addon['ищут ли одного человека']:
+        if (user_pair or user_guys or user_girls) and (not "да" in addon['ищут ли двух человек'] and ("не" in addon["ищут ли пару из мужчины и женщины"]) and ("не" in addon["ищут ли пару женщин/девушек"]) and "не" in addon["ищут ли пару мужчин/парней"]) and "да" in addon['ищут ли одного человека']:
             raise Exception
-        if user_pair and "нет" in addon["ищут ли пару из мужчины и женщины"]:
+        if user_pair and "нет" in addon["ищут ли пару из мужчины и женщины"] and not all_net:
                 raise Exception
-        if user_guys and "нет" in addon["ищут ли пару мужчин/парней"]:
+        if user_guys and "нет" in addon["ищут ли пару мужчин/парней" ] and not all_net:
             raise Exception
-        if user_girls and "нет" in addon["ищут ли пару женщин/девушек"]:
+        if user_girls and "нет" in addon["ищут ли пару женщин/девушек"] and not all_net:
             raise Exception
         if user_girls and ("не указано" in addon["ищут ли пару женщин/девушек"]) and (("да" in addon["ищут ли пару мужчин/парней"]) or "да" in addon["ищут ли пару из мужчины и женщины"] or "да" in addon['ищут ли одного мужчину/парня'] or "да" in addon['ищут ли одну женщину/девушку']):
             raise Exception
@@ -375,7 +425,8 @@ def parse_addon(addon, params, good_description):
             raise Exception
         if user_pair and "не указано" in addon["ищут ли пару из мужчины и женщины"] and (("да" in addon["ищут ли пару женщин/девушек"]) or "да" in addon["ищут ли пару мужчин/парней"]  or "да" in addon['ищут ли одного мужчину/парня'] or "да" in addon['ищут ли одну женщину/девушку']):
             raise Exception
-        
+        if "не указано" in addon['ищут ли двух человек'] and not any("Жен" in a for a in params['sex']) and not any("Муж" in a for a in params['sex']) and any("двое" in a for a in params['sex']) and ("да" in addon['ищут ли одного мужчину/парня'] or "да" in addon['ищут ли одну женщину/девушку']):
+            raise Exception
         if not user_man and not user_woman and "да" in addon['ищут ли двух человек'] and any("двое" in a for a in params['sex']):
             
             pass   
@@ -402,7 +453,8 @@ def parse_addon(addon, params, good_description):
             pass  
         if not user_man and not user_woman and "да" in addon['ищут ли двух человек'] and not any("двое" in a for a in params['sex']):
             raise Exception
-        if (any("кошка" in a for a in addon['можно ли заселиться с животными']) and any("Кошка" in a for a in params['animal'])) or (any("cобака" in a for a in addon['можно ли заселиться с животными']) and any("Собака" in a for a in params['animal'])) or "да" in addon['можно ли заселиться с животными'] or "не " in addon['можно ли заселиться с животными']:
+       # import pdb; pdb.set_trace()
+        if (any("кошка" in a for a in addon['можно ли заселиться с животными']) and any("Кошка" in a for a in params['animal'])) or (("cоба"in addon['можно ли заселиться с животными']) and any("Собака" in a for a in params['animal'])) or ("да" in addon['можно ли заселиться с животными']) or "не " in addon['можно ли заселиться с животными']:
             pass
         elif params['animal'] != []:
             #import pdb;pdb.set_trace()
@@ -453,13 +505,28 @@ def main():
     def callback_query(call):
       #  import pdb; pdb.set_trace()
         global TINY_DB
+        if "i am" in call.data:
+            all_params = load_parameters()
+            params = all_params[str(call.message.chat.id)]
+            #params = get_chat_parameters(call.message.chat.id)
+            if "no" in call.data:
+                params['answered'] = 0
+                bot.send_message(call.message.chat.id, "Спасибо за отзыв. Пожалуйста, напишите о проблемах в работе боат в личные сообщения @milkicow, это поможет боту дальше развиваться")
+            else:
+                params['answered'] = 1
+                bot.send_message(call.message.chat.id, "Спасибо за отзыв. Я очень рад, что сервис вам нравится, о любых недочётах можете написать в личные сообщения @milkicow, тогда вы поможете боту развиваться и дальше.")
+            
+            all_params[str(call.message.chat.id)] = params
+            save_parameters(params=all_params)
+        
+            print("here" + str(call.message.chat.id))
         if 'startstart' in call.data:
             start_start(call.message)
         if 'sex' in call.data:
             
             keyboard = types.InlineKeyboardMarkup()
            # list = [types.InlineKeyboardButton('Двухкомнатные квартиры', callback_data='start 2'), types.InlineKeyboardButton('Однокомнатные квартиры', callback_data='start 1'), types.InlineKeyboardButton('Комнаты', callback_data='start 0')]
-            list = [types.InlineKeyboardButton('Нас двое', callback_data='sex 2'), types.InlineKeyboardButton('Мужчина🤵‍♂️', callback_data='sex 1'), types.InlineKeyboardButton('Женщина👩‍🦱', callback_data='sex 0')]
+            list = [types.InlineKeyboardButton('Нас двое', callback_data='sex 3'), types.InlineKeyboardButton('Я один', callback_data='sex 2'), types.InlineKeyboardButton('Мужчина🤵‍♂️', callback_data='sex 1'), types.InlineKeyboardButton('Женщина👩‍🦱', callback_data='sex 0')]
             
             if call.data.split()[1] == "continue":
                 get_mates(call.message)
@@ -566,6 +633,15 @@ def main():
                 keyboard.add(button_bar)   
                 bot.edit_message_reply_markup(chat_id=call.message.chat.id, message_id=call.message.message_id, reply_markup=keyboard) 
 
+        if 'check_under' in call.data:
+            if 'yes' in call.data:
+                
+                bot.clear_step_handler_by_chat_id(chat_id=call.message.chat.id)
+                check_undergrounds(call.message)
+            if 'retry' in call.data:
+                bot.send_message(call.message.chat.id, "Укажите автономный округ или станцию метро *через запятую*, пример: (СЗАО, САО, Маяковская, Алексеевская")
+                bot.register_next_step_handler(call.message, lambda msg: get_undergrounds(msg))
+                
         if 'max' in call.data:
             if 'continue' in call.data:
                 #import pdb;pdb.set_trace()
@@ -614,7 +690,7 @@ def main():
 
         if "cian.ru" in call.data:
             try:
-                save_action(call.message.chat.id, 'desc')
+               # save_action(call.message.chat.id, 'desc')
                 print(call.message.chat.id)
                 #import pdb; pdb.set_trace()
                 a = load_cache()
@@ -630,7 +706,7 @@ def main():
         keyboard = types.InlineKeyboardMarkup()
         button_bar = types.InlineKeyboardButton('Приступим🏃‍♀️🏃🚴‍♂️', callback_data='startstart') 
         keyboard.add(button_bar)
-        bot.send_message(message.chat.id, "Привет, я бот, который с помощью искуственного интеллекта будет обрабатывать описания новых объявлений на *Циане (по Москве)* и присылать те, которые подходят под ваш запрос (например, возможности проживания с кошкой) *в течение 3-х минут* после их публикации.\n\nПроект находится на стадии разработки, поэтому *для поиска доступны только комнаты!*\n\nДля начала нужно заполнить анкету, приступим?", reply_markup=keyboard, parse_mode= 'Markdown')
+        bot.send_message(message.chat.id, "Привет, я бот, который с помощью искуственного интеллекта будет обрабатывать описания новых объявлений на *Циане (по Москве)* и присылать те, которые подходят под ваш запрос (например, возможности проживания с кошкой) *в течение 3-х минут* после их публикации.\n\nПроект находится на стадии разработки, поэтому *для поиска доступны только комнаты!*\n\nДля начала нужно заполнить анкету, приступим? \n @KvartiraDar - поддержка, обратная связь", reply_markup=keyboard, parse_mode= 'Markdown')
         
         
     
@@ -642,9 +718,11 @@ def main():
         keyboard.add(button_bar)
         button_bar = types.InlineKeyboardButton('Мужчина🤵‍♂️', callback_data='sex 1') 
         keyboard.add(button_bar)
-        button_bar = types.InlineKeyboardButton('Нас двое', callback_data='sex 2') 
+        button_bar = types.InlineKeyboardButton('Я один', callback_data='sex 2') 
         keyboard.add(button_bar)
-        TINY_DB[message.chat.id]['sex_input'] = [False, False, False]
+        button_bar = types.InlineKeyboardButton('Нас двое', callback_data='sex 3') 
+        keyboard.add(button_bar)
+        TINY_DB[message.chat.id]['sex_input'] = [False, False, False, False]
         bot.send_message(message.chat.id, "Для начала выберите ваш пол, даже если вас двое.\n Вы будете получать объявления, в которых собственник ищет людей вашего пола, с учётом вашего количества.\nМожно выбрать несколько.", reply_markup=keyboard)
     
     
@@ -689,7 +767,7 @@ def main():
     def old_start(message):
         #TINY_DB[message.chat.id] = {}
         TINY_DB[message.chat.id]['state'] = 'start'
-        save_action( message.chat.id, 'start')
+        #save_action( message.chat.id, 'start')
         keyboard = types.InlineKeyboardMarkup()
         button_bar = types.InlineKeyboardButton('Комнаты ', callback_data='start 0')
         keyboard.add(button_bar)
@@ -729,7 +807,7 @@ def main():
             bot.send_message(message.chat.id, "Пожалуйста, введите корректное число.")
 
     def get_max_price(message, next_, rooms):
-        save_action(message.chat.id, 'max_price')
+        #save_action(message.chat.id, 'max_price')
         try:
             max_price = int(message.text)
             if max_price < 500:
@@ -743,20 +821,32 @@ def main():
                 keyboard = types.InlineKeyboardMarkup()
                 button_bar = types.InlineKeyboardButton('Пропустить', callback_data='undergrounds continue')
                 keyboard.add(button_bar)  
-                bot.send_message(message.chat.id, "Теперь укажите станцию метро с большой буквы (или несколько через запятую, также с большой буквы).", reply_markup=keyboard)
+                bot.send_message(message.chat.id, "Теперь укажите автономный округ или станцию метро *через запятую*, пример: (СЗАО, САО, Маяковская, Алексеевская)", reply_markup=keyboard)
+                
                 bot.register_next_step_handler(message, lambda msg: get_undergrounds(msg))
         except ValueError:
             bot.send_message(message.chat.id, "Пожалуйста, введите корректное число.")
 
 
     def get_undergrounds(message, skip = False):
+        
         global TINY_DB
-        if not skip:
+        if not skip:    
             undergrounds_input = message.text.split(',')
+    
             TINY_DB[message.chat.id]['undergrounds'] = [station.strip() for station in undergrounds_input]
         else :
             TINY_DB[message.chat.id]['undergrounds']=".*"
-          
+        keyboard = types.InlineKeyboardMarkup()
+        button_bar = types.InlineKeyboardButton('Да', callback_data='check_under yes')
+        keyboard.add(button_bar) 
+        
+        button_bar = types.InlineKeyboardButton('Ввести заново', callback_data='check_under retry')
+        keyboard.add(button_bar)
+        bot.send_message(message.chat.id, "Вы ввели следующие параметры: "+ str(TINY_DB[message.chat.id]['undergrounds']), reply_markup=keyboard)
+        
+    def check_undergrounds(message, skip = False):
+        
         keyboard = types.InlineKeyboardMarkup()
         button_bar = types.InlineKeyboardButton('Да', callback_data='author yes')
         keyboard.add(button_bar) 
@@ -764,11 +854,10 @@ def main():
         button_bar = types.InlineKeyboardButton('Пропустить', callback_data='author continue')
         keyboard.add(button_bar)
         bot.send_message(message.chat.id, "Хотите ли получать предложения только от собственников?\n", reply_markup=keyboard)
-                               
         
     def get_author_type(message, skip = False, author = False):
-        global TINY_DB
         
+        global TINY_DB
         if not skip and author:
             TINY_DB[message.chat.id]['author_type'] = "Владелец"
         else:
@@ -806,18 +895,54 @@ def main():
             'period': TINY_DB[message.chat.id]['period_input']
         }
         
-
+        
         save_parameters(all_params)  
+        ads_to_filter = []
+        ads = load_ads()
+        do_flag = False
+        for segment in ads:
         
+            for ad in ads[segment][-100:]:  
+                if 'addon' in ad:
+                    ads_to_filter[segment] = ads_to_filter[segment] + [ad]
+
+        params = load_parameters()
+        params = all_params[str(message.chat.id)]
+        filtered_ads = {}
+        for ads_segment in ads_to_filter:
+            filtered_ads[ads_segment] = filter_ads(ads_to_filter[ads_segment], params)
         
-        bot.send_message(message.chat.id, "Ваши параметры сохранены. Я буду уведомлять вас о новых объявлениях.")
-        
+        for ad in filtered_ads[-30:]:
+            
+            msg = f"""{ad['title']}
+🚇Метро: {ad['underground']} {ad['metro_dist']}
+🧍‍♂️Автор: {ad['author_type']}
+Количество комнат: {ad['rooms_count']}
+💸Цена: {ad['price_per_month']}₽
+🏘Район: {ad['district']}
+🔗Источник: {ad['url']}\n
+    """
+            if 'addon' in ad:
+                parsed_addon = parse_addon(ad['addon'], params=params, good_description=ad['good_description'])
+                msg = msg + parsed_addon  
+                        #  import pdb; pdb.set_trace()
+            else:
+                parsed_addon = ""
+            
+            if parsed_addon != "":
+                bot.send_message(message.chat.id, msg)
+                do_flag = True
+        if do_flag:
+            bot.send_message(message.chat.id, "Вот недавние объявления, которые могут подойти под ваш запрос, также я буду уведомлять Вас о всех новых объявлениях, как только они появятся. \n t.me/FlatoonChat - все-все-все объявления")
+        else:
+            bot.send_message(message.chat.id, "К сожалению по вашему запросу не нашлось недавних объявлений. \n t.me/FlatoonChat - все объявления")
+        bot.send_message(message.chat.id, "Для активации тестовой подписки используйте команду /test_subscription")
     bot.polling(none_stop=True)
-                        
+               
     #import threading
     #threading.Thread(target=watch_json_file, daemon=True).start()
-
-
+def send_greeting_ads():
+    pass
     # Запуск бота
 if __name__ == '__main__':
     while True:
