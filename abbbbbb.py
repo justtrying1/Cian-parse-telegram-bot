@@ -107,7 +107,7 @@ def filter_out(offer_list, old, i, break_flag):
                             break
 
 
-OLD_JSON = "&rent&30000&40000&1 room&Москва&2024-09-30 22-40-46.json"
+OLD_JSON = r"&rent&30000&40000&1 room&Москва&2024-09-30 22-40-46.json"
 def load_old():
     while True:
         try:

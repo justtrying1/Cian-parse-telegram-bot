@@ -233,7 +233,7 @@ def save_cache(appeared):
                         print("addon parsed!")
                         if chat_id == 7494874190:
                             bot.send_message(chat_id="@FlatoonChat", text= msg)
-                        if "test_subscription" not in all_params[i] & "subscription" not in all_params[i]:
+                        if ("test_subscription" not in all_params[i]) & ("subscription" not in all_params[i]):
                             sub_flag = True
                         elif get_subscription_state(chat_id):
                             bot.send_message(chat_id, msg, reply_markup=keyboard)   
@@ -294,6 +294,61 @@ def get_chat_parameters(chat_id):
 def load_ads():
     with open(JSON_FILE_PATH, 'r', encoding='utf-8') as file:
         return json.load(file)
+def send_old_ads(message, params, flag = False):
+    all_params = params
+    params = params[str(message.chat.id)]
+    
+    ads_to_filter = []
+    ads = load_ads()
+    do_flag = False
+    for segment in ads:
+    
+        for ad in ads[segment][-15:]:
+            
+            if 'addon' in ad:
+                ads_to_filter = ads_to_filter + [ad]
+    
+    #import pdb; pdb.set_trace()
+    
+    filtered_ads = filter_ads(ads_to_filter, params)
+    
+    for ad in filtered_ads[-30:]:
+        
+        msg = f"""{ad['title']}
+🚇Метро: {ad['underground']} {ad['metro_dist']}
+🧍‍♂️Автор: {ad['author_type']}
+Количество комнат: {ad['rooms_count']}
+💸Цена: {ad['price_per_month']}₽
+🏘Район: {ad['district']}
+🔗Источник: {ad['url']}\n
+"""
+        if 'addon' in ad:
+            parsed_addon = parse_addon(ad['addon'], params=params, good_description=ad['good_description'])
+            msg = msg + parsed_addon  
+                    #  import pdb; pdb.set_trace()
+        else:
+            parsed_addon = ""
+        
+        if parsed_addon != "":
+            bot.send_message(message.chat.id, msg)
+            do_flag = True
+    if do_flag:
+       
+        if flag:
+            bot.send_message(message.chat.id, "К сожалению по вашему запросу не нашлось недавних объявлений. Поиск был расширен")
+        else:
+            bot.send_message(message.chat.id, "Вот некоторые объявления, которые могут подойти под ваш запрос, также я буду уведомлять Вас о всех новых объявлениях, как только они появятся. \n t.me/FlatoonChat - все-все-все объявления")
+        bot.send_message(message.chat.id, "Чтобы получать новые объявления необходимо выполнить активацию тестовой подписки с помощью команды /test_subscription")
+        all_params[str(message.chat.id)] = params
+        save_parameters(all_params)
+    else:
+        params['author_type'] = "Любой"
+        params['rooms'][0]['max_price'] = params['rooms'][0]['max_price'] + 2500
+        all_params[str(message.chat.id)] = params
+        send_old_ads(message, all_params, flag=True)
+        
+
+    
 
 # Функция для фильтрации объявлений по цене и количеству комнат
 def filter_ads(ads, criteria):
@@ -352,8 +407,8 @@ def parse_addon(addon, params, good_description):
     try:
         
         
-        if "не указано" in addon['можно ли заселиться с животными'] and not any("про животных" in a for a in params['animal']) and params['animal'] != []:
-            raise Exception
+      ##  if "не указано" in addon['можно ли заселиться с животными'] and not any("про животных" in a for a in params['animal']) and params['animal'] != []:
+        #s    raise Exception
         if ("не ука" in str(addon["сколько людей живёт в настоящий момент в квартире?"])) or (addon["сколько людей живёт в настоящий момент в квартире?"] <=1 ) or (any("одного" in a for a in params['mates'])) or (((len(list(addon['кто живёт в настоящий момент'].values()))) == 1) and any("Один" in a for a in params['mates'])):
             #import pdb;pdb.set_trace()
             print(len(list(addon['кто живёт в настоящий момент'].values())))
@@ -802,7 +857,7 @@ def main():
                 keyboard = types.InlineKeyboardMarkup()
                 button_bar = types.InlineKeyboardButton('Пропустить', callback_data='undergrounds continue')
                 keyboard.add(button_bar)  
-                bot.send_message(message.chat.id, "Теперь укажите автономный округ или станцию метро с большой буквы пример: (СЗАО, САО, Маяковская, Алексеевская)", reply_markup=keyboard)
+                bot.send_message(message.chat.id, "Теперь укажите автономный округ или станцию метро с большой буквы, через запятую пример: (СЗАО, САО, Маяковская, Алексеевская)", reply_markup=keyboard)
                 
                 bot.register_next_step_handler(message, lambda msg: get_undergrounds(msg))
         except ValueError:
@@ -846,13 +901,20 @@ def main():
     def get_metro_dist(message, skip = False):
        # import pdb; pdb.set_trace()
         TINY_DB[message.chat.id]['period_input'] = ""
-        bot.register_next_step_handler(message, lambda msg: start(msg))
+        #bot.register_next_step_handler(message, lambda msg: start(msg))
         if not skip:
             TINY_DB[message.chat.id]['metro_dist'] = int(message.text)
         else:
             TINY_DB[message.chat.id]['metro_dist'] = 1000
+        subflag = 0
         all_params = load_parameters()
-        
+        try:
+            if "test_subscription" in all_params[str(message.chat.id)]:
+                subflag = all_params[str(message.chat.id)]["test_subscription"]
+            if "subscription" in all_params[str(message.chat.id)]:
+                subsubflag = all_params[str(message.chat.id)]["subscription"]
+        except:
+            pass
             # Сохранение параметров для текущего чата
         all_params[str(message.chat.id)] = {
             'rooms': TINY_DB[message.chat.id]['rooms'],
@@ -864,50 +926,19 @@ def main():
             'animal': TINY_DB[message.chat.id]['animal_input'] ,
             'mates': TINY_DB[message.chat.id]['mates_input'],
             'period': TINY_DB[message.chat.id]['period_input']
+            
         }
+        if subflag != 0:
+            all_params[str(message.chat.id)]["test_subscription"] = subflag
+        if subsubflag != 0:
+            all_params[str(message.chat.id)]["subscription"] = subsubflag
         
         
-        save_parameters(all_params)  
-        ads_to_filter = []
-        ads = load_ads()
-        do_flag = False
-        for segment in ads:
+        save_parameters(all_params) 
+        all_params = load_parameters()
         
-            for ad in ads[segment][-7:]:
-                
-                if 'addon' in ad:
-                    ads_to_filter = ads_to_filter + [ad]
+        send_old_ads(message, all_params) 
         
-        #import pdb; pdb.set_trace()
-        params = load_parameters()
-        params = all_params[str(message.chat.id)]
-        filtered_ads = filter_ads(ads_to_filter, params)
-        
-        for ad in filtered_ads[-30:]:
-            
-            msg = f"""{ad['title']}
-🚇Метро: {ad['underground']} {ad['metro_dist']}
-🧍‍♂️Автор: {ad['author_type']}
-Количество комнат: {ad['rooms_count']}
-💸Цена: {ad['price_per_month']}₽
-🏘Район: {ad['district']}
-🔗Источник: {ad['url']}\n
-    """
-            if 'addon' in ad:
-                parsed_addon = parse_addon(ad['addon'], params=params, good_description=ad['good_description'])
-                msg = msg + parsed_addon  
-                        #  import pdb; pdb.set_trace()
-            else:
-                parsed_addon = ""
-            
-            if parsed_addon != "":
-                bot.send_message(message.chat.id, msg)
-                do_flag = True
-        if do_flag:
-            bot.send_message(message.chat.id, "Вот некоторые объявления, которые могут подойти под ваш запрос, также я буду уведомлять Вас о всех новых объявлениях, как только они появятся. \n t.me/FlatoonChat - все-все-все объявления")
-        else:
-            bot.send_message(message.chat.id, "К сожалению по вашему запросу не нашлось недавних объявлений. \n t.me/FlatoonChat - все объявления")
-        bot.send_message(message.chat.id, "Для активации тестовой подписки используйте команду /test_subscription")
     bot.polling(none_stop=True)
                
     #import threading
