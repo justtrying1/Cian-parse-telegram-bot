@@ -162,7 +162,98 @@ def load_cache():
        a = json.load(file)
     return a
 
+def save_cache_tg(appeared):
+  
+    all_params = load_parameters()
+    sent_list = {}
+    cache = load_cache()
+    for i in all_params.keys():
+        if all_params[i] == {}:
+            try:
+                continue
+            except:
+                print(traceback.format_exc())
+                continue
+        
+        chat_id = all_params.get(i)['chat_id']
+        new_filtered_ads = filter_ads_tg(appeared, all_params.get(i))
+        sent_list[chat_id] = str(len(new_filtered_ads))
+       
+        if str(chat_id) not in cache.keys():
+            cache[str(chat_id)] = {}
+      
+        try:
+            if isinstance(cache[str(chat_id)]['last 20'], list):
+                cache[str(chat_id)]['last 20'] = {}
+        except:
+            pass
+        if 'last 20' in cache[str(chat_id)].keys():
+            pass
+        else:
+            cache[str(chat_id)]['last 20'] = {}
+        if len(cache[str(chat_id)]['last 20'].keys()) > 20:
+            for j in list(cache[str(chat_id)]['last 20'].keys())[:-20]:
+                cache[str(chat_id)]['last 20'].pop(j)
+        if(len(new_filtered_ads)) > 0:
+            try:
+                parsed_count = 0
+                for ad in new_filtered_ads:
+                    cache[str(chat_id)]['last 20'][ad['post_id']] = ad['text']        
+                    msg = f"источник: {ad['link']}\n"
+                    if 'addon' in ad:
+                        parsed_addon = parse_addon(ad['addon'], params=all_params.get(i), good_description=ad['good_description'])
+                        msg = parsed_addon + msg   
+                    else:
+                        parsed_addon = ""  
+                    sub_flag = False
+                    if parsed_addon != "":
+                        parsed_count = parsed_count + 1 
+                        print("addon parsed!")
+                        if chat_id == 7494874190:
+                            bot.send_message(chat_id="@FlatoonChat", text= msg + "\n @FlatoonBot - получай уведомления о новых объявлениях с учётом твоего пола, пожеланий к соседям и т.д.")
+                        if ("test_subscription" not in all_params[i]) & ("subscription" not in all_params[i]):
+                            sub_flag = True
+                        elif get_subscription_state(chat_id)[0]:
+                            bot.send_message(chat_id, msg, reply_markup=keyboard)   
+                        else:
+                            sub_flag = True
+                
+                       
+                    
+                    elif chat_id == 7494874190:
+                        bot.send_message(chat_id="@FlatoonChat", text=ad['good_description']+"\n" + msg)
+                        bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n")
+            
+                
+                if parsed_count > 0: 
+                    button_bar = types.InlineKeyboardButton('Да', callback_data="i am here")
+                    button_bar2 = types.InlineKeyboardButton('Нет', callback_data="i am no")
+                    keyboard = types.InlineKeyboardMarkup()
+                    keyboard.add(button_bar)
+                    keyboard.add(button_bar2)
+                    
+                    if sub_flag:
+                        bot.send_message(chat_id, "Чтобы получать новые объявления активируйте тестовую подписку с помощью /test_subscription или приобретите двухнедельную подписку с помощью команды /buy")
+                    else:
+                        if "answered" not in all_params.get(i).keys():
 
+                            bot.send_message(chat_id, text='Нравится ли вам сервис?', reply_markup=keyboard)
+                        bot.send_message(chat_id, text='Появилось {} новых объявления по вашему запросу, чтобы поменять параметры воспользуйтесь командой /start\n'    
+                                        "t.me/FlatoonChat - канал со всеми объявлениями".format(str(parsed_count)))
+                
+            except:
+              #  if chat_id == 7494874190:
+                   # import pdb; pdb.set_trace()
+                print(traceback.format_exc())
+                
+           # save_action("sent", sent_list)
+        while True:
+            try:
+                with open(CACHE_FILE, "w+", encoding='utf-8') as file:
+                    json.dump(cache, file, ensure_ascii=False)
+                break
+            except:
+                pass
 def save_cache(appeared):
   
     all_params = load_parameters()
@@ -419,6 +510,18 @@ def filter_ads(ads, criteria):
                     break
             except KeyError:
                 pass        
+    return filtered
+def filter_ads_tg(ads, criteria):
+    filtered = []
+    
+    for ad in ads:       
+        addon = ad['addon'][0] #!!!
+        for room_criteria in criteria['rooms']:
+            try:
+                if  room_criteria['min_price'] <= int(addon['стоимость месячной аренды']) <= room_criteria['max_price']:
+                    filtered.append(ad)
+            except:
+                print(traceback.format_exc())
     return filtered
 
 def parse_addon(addon, params, good_description, strict=False):

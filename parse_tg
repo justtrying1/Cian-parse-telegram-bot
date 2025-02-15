@@ -46,12 +46,8 @@ def load_old():
         except:
             pass
 
+from telegrambot import save_cache_tg
 def parse_tg():
-  
-    
-    
- 
-    
     while True:
        
         old_json = load_old()
@@ -66,10 +62,20 @@ def parse_tg():
                     for i in soup.find_all("div", {"class":"tgme_widget_message text_not_supported_wrap js-widget_message"}):
                         post_dict = {}
                         post_dict['post_id'] = i['data-post']
-                        post_dict['text'] = i.text
+                        post_dict['text'] = re.sub('\n+', '\n', i.text )
                         post_dict['link'] = "https://t.me/"+ i['data-post']+"?single"
-                        post_list = post_list + [post_dict]
                        
+                       
+
+                        global dt
+                        addon, good_description = chain_prompt(data=dt, desc=post_dict["text"], type = 1,telegram=True)
+                        post_dict["addon"] = addon
+                        post_dict["good_description"] = good_description
+                        dt = {
+    'model': 'gpt-4o-mini', 
+    'messages': [ {'role': 'user', 'content': r"{0} {1}"}
+    ]}
+                        post_list = post_list + [post_dict]         
                 except:
                     import traceback
                     print(traceback.format_exc())
@@ -97,6 +103,7 @@ def parse_tg():
                                         break
                     
                     old_json[channel] = old_json[channel] + post_list
+                    save_cache_tg(post_list)
         while True:
             try:
                 print(3)
