@@ -45,7 +45,6 @@ def load_old():
                 return json.load(file)
         except:
             pass
-
 from telegrambot import save_cache_tg
 def parse_tg():
     while True:

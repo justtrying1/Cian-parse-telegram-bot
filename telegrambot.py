@@ -209,8 +209,7 @@ def save_cache_tg(appeared):
                     if parsed_addon != "":
                         parsed_count = parsed_count + 1 
                         print("addon parsed!")
-                        if chat_id == 7494874190:
-                            bot.send_message(chat_id="@FlatoonChat", text= msg + "\n @FlatoonBot - получай уведомления о новых объявлениях с учётом твоего пола, пожеланий к соседям и т.д.")
+                       
                         if ("test_subscription" not in all_params[i]) & ("subscription" not in all_params[i]):
                             sub_flag = True
                         elif get_subscription_state(chat_id)[0]:
@@ -221,7 +220,7 @@ def save_cache_tg(appeared):
                        
                     
                     elif chat_id == 7494874190:
-                        bot.send_message(chat_id="@FlatoonChat", text=ad['good_description']+"\n" + msg)
+                        
                         bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n")
             
                 
@@ -322,8 +321,7 @@ def save_cache(appeared):
                     if parsed_addon != "":
                         parsed_count = parsed_count + 1 
                         print("addon parsed!")
-                        if chat_id == 7494874190:
-                            bot.send_message(chat_id="@FlatoonChat", text= msg + "\n @FlatoonBot - получай уведомления о новых объявлениях с учётом твоего пола, пожеланий к соседям и т.д.")
+                    
                         if ("test_subscription" not in all_params[i]) & ("subscription" not in all_params[i]):
                             sub_flag = True
                         elif get_subscription_state(chat_id)[0]:
@@ -334,7 +332,7 @@ def save_cache(appeared):
                        
                     
                     elif chat_id == 7494874190:
-                        bot.send_message(chat_id="@FlatoonChat", text=ad['good_description']+"\n" + msg)
+        
                         bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n")
             
                 
