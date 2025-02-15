@@ -218,8 +218,7 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
 
         break_flag = False
         if not preload:
-            #filter_out(offer_list, old, i, break_flag)      
-          
+       
             if len(offer_list) > 0:
                 if any(d['url'] == offer_list[-1]['url'] for d in old[str(i)]):  
                     flag1 = False  
@@ -232,7 +231,6 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
                                 break_flag = True
                             if any(d['url'] == offer_list[j]['url'] for d in old[str(i)]):
                                     offer_list.pop(j)
-                                   
                                     break
         print(datetime.now())
         page += 1
@@ -241,7 +239,7 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
         
         if(flag or (page == 4) or break_flag): 
             if preload:
-                #filter_out(offer_list, old, i, break_flag)
+          
                 
                 if len(offer_list) > 0:
                     if any(d['url'] == offer_list[-1]['url'] for d in old[str(i)]):  
