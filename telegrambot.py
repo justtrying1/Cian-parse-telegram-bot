@@ -380,9 +380,66 @@ def get_chat_parameters(chat_id):
     all_params = load_parameters()
     return all_params.get(str(chat_id), None)
 # Функция для загрузки объявлений из локального JSON
-def load_ads():
+def load_ads(JSON_FILE_PATH=JSON_FILE_PATH):
     with open(JSON_FILE_PATH, 'r', encoding='utf-8') as file:
         return json.load(file)
+
+def send_old_ads_tg(message, params,dont_flag = 0, flag = False):
+    all_params = params
+    params = params[str(message.chat.id)]
+    
+    ads_to_filter = {}
+    ads = load_ads(JSON_FILE_PATH="tg_posts.json")
+    do_flag = False
+    
+    for segment in ads:
+            for ad in ads[segment][-100:]:  
+                if 'addon' in ad:
+                    if segment not in ads_to_filter:
+                        ads_to_filter[segment] = []
+                    ads_to_filter[segment] = ads_to_filter[segment] + [ad]
+    
+    filtered_ads = {}
+    for ads_segment in ads_to_filter:
+        filtered_ads[ads_segment] = filter_ads_tg(ads_to_filter[ads_segment], params)
+    for ads_segment in filtered_ads:
+        count = 0
+        for ad in filtered_ads[ads_segment][-100:]:
+            
+            msg = f"источник: {ad['link']}\n"
+            if 'addon' in ad:
+                parsed_addon = parse_addon(ad['addon'], params=params, good_description=ad['good_description'])
+                msg = msg + parsed_addon  
+            else:
+                parsed_addon = ""
+            if parsed_addon != "":
+                bot.send_message(message.chat.id, msg)
+                count = count + 1 
+                do_flag = True
+            if count > 3 : #or (datetime.strptime(ad['time'], '%Y-%m-%d  %H-%M-%S') - datetime.now()).days > 10
+                break
+    if do_flag:
+        if flag:
+            #bot.send_message(message.chat.id, "К сожалению по вашему запросу не нашлось недавних объявлений. Поиск был расширен")
+            pass
+        else:
+            pass
+            #bot.send_message(message.chat.id, "Вот некоторые недавние объявления, которые могут подойти под ваш запрос, также я буду уведомлять Вас о всех новых объявлениях, как только они появятся. \n t.me/FlatoonChat - все-все-все объявления")
+        #bot.send_message(message.chat.id, "Чтобы получать новые объявления необходимо выполнить активацию тестовой подписки с помощью команды /test_subscription")
+        all_params[str(message.chat.id)] = params
+        save_parameters(all_params)
+    else:
+        dont_flag = dont_flag + 1
+        if dont_flag > 0:   
+            params['author_type'] = "Любой"
+        if dont_flag > 1:
+            params['rooms'][0]['max_price'] = params['rooms'][0]['max_price'] + 2500
+        if dont_flag > 3:
+            params['undergrounds'] = ".*"
+        
+        all_params[str(message.chat.id)] = params
+        send_old_ads_tg(message, all_params,dont_flag, flag=True)
+    
 def send_old_ads(message, params,dont_flag = 0, flag = False):
     all_params = params
     params = params[str(message.chat.id)]
