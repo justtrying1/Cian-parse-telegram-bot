@@ -181,18 +181,18 @@ def save_cache_tg(appeared):
                 continue
         
         chat_id = all_params.get(i)['chat_id']
-        new_filtered_ads = filter_ads_tg(appeared, all_params.get(i))
-        sent_list[chat_id] = str(len(new_filtered_ads))
+        
+        sent_list[chat_id] = str(len(appeared))
        
        
-        if(len(new_filtered_ads)) > 0:
+        if(len(appeared)) > 0:
             try:
                 parsed_count = 0
-                for ad in new_filtered_ads:
+                for ad in appeared:
                        
                     msg = f"источник: {ad['link']}\n"
                     if 'addon' in ad:
-                        parsed_addon = parse_addon(ad['addon'], params=all_params.get(i), good_description=ad['good_description'])
+                        parsed_addon = parse_addon(ad['addon'], params=all_params.get(i), good_description=ad['good_description'], telegram=True)
                         msg = parsed_addon + msg   
                     else:
                         parsed_addon = ""  
@@ -234,13 +234,7 @@ def save_cache_tg(appeared):
                 print(traceback.format_exc())
                 
            # save_action("sent", sent_list)
-        while True:
-            try:
-                with open(CACHE_FILE, "w+", encoding='utf-8') as file:
-                    json.dump(cache, file, ensure_ascii=False)
-                break
-            except:
-                pass
+        
 def save_cache(appeared):
   
     all_params = load_parameters()
@@ -324,21 +318,10 @@ def save_cache(appeared):
 
                             bot.send_message(chat_id, text='Нравится ли вам сервис?', reply_markup=keyboard)
                         bot.send_message(chat_id, text='Появилось {} новых объявления по вашему запросу, чтобы поменять параметры воспользуйтесь командой /start\n'    
-                                        "t.me/FlatoonChat - канал со всеми объявлениями".format(str(parsed_count)))
-                
+                                        "t.me/FlatoonChat - канал со всеми объявлениями".format(str(parsed_count)))      
             except:
-              #  if chat_id == 7494874190:
-                   # import pdb; pdb.set_trace()
                 print(traceback.format_exc())
-                
-           # save_action("sent", sent_list)
-        while True:
-            try:
-                with open(CACHE_FILE, "w+", encoding='utf-8') as file:
-                    json.dump(cache, file, ensure_ascii=False)
-                break
-            except:
-                pass
+       
 def load_parameters():
     if os.path.exists(PARAMS_FILE):
         with open(PARAMS_FILE, 'r', encoding='utf-8') as file:
@@ -365,24 +348,21 @@ def send_old_ads_tg(message, params,dont_flag = 0, flag = False):
     ads_to_filter = {}
     ads = load_ads(JSON_FILE_PATH="tg_posts.json")
     do_flag = False
-    
+   
     for segment in ads:
             for ad in ads[segment][-100:]:  
                 if 'addon' in ad:
                     if segment not in ads_to_filter:
                         ads_to_filter[segment] = []
                     ads_to_filter[segment] = ads_to_filter[segment] + [ad]
-    
-    filtered_ads = {}
+    #import pdb; pdb.set_trace()
     for ads_segment in ads_to_filter:
-        filtered_ads[ads_segment] = filter_ads_tg(ads_to_filter[ads_segment], params)
-    for ads_segment in filtered_ads:
         count = 0
-        for ad in filtered_ads[ads_segment][-100:]:
+        for ad in ads_to_filter[ads_segment][-100:]:
             
             msg = f"источник: {ad['link']}\n"
             if 'addon' in ad:
-                parsed_addon = parse_addon(ad['addon'], params=params, good_description=ad['good_description'])
+                parsed_addon = parse_addon(ad['addon'], params=params, good_description=ad['good_description'], telegram=True)
                 msg = msg + parsed_addon  
             else:
                 parsed_addon = ""
@@ -410,35 +390,28 @@ def send_old_ads_tg(message, params,dont_flag = 0, flag = False):
             params['rooms'][0]['max_price'] = params['rooms'][0]['max_price'] + 2500
         if dont_flag > 3:
             params['undergrounds'] = ".*"
-        
+ 
         all_params[str(message.chat.id)] = params
         send_old_ads_tg(message, all_params,dont_flag, flag=True)
     
 def send_old_ads(message, params,dont_flag = 0, flag = False):
     all_params = params
     params = params[str(message.chat.id)]
-    
     ads_to_filter = {}
     ads = load_ads()
     do_flag = False
-    
     for segment in ads:
-        
             for ad in ads[segment][-100:]:  
                 if 'addon' in ad:
                     if segment not in ads_to_filter:
                         ads_to_filter[segment] = []
                     ads_to_filter[segment] = ads_to_filter[segment] + [ad]
-    
-    #import pdb; pdb.set_trace()
-    
     filtered_ads = {}
     for ads_segment in ads_to_filter:
         filtered_ads[ads_segment] = filter_ads(ads_to_filter[ads_segment], params)
     for ads_segment in filtered_ads:
         count = 0
         for ad in filtered_ads[ads_segment][-100:]:
-            
             msg = f"""{ad['title']}
 🚇метро: {ad['underground']} {ad['metro_dist']}
 🧍‍♂️автор: {ad['author_type']}
@@ -553,7 +526,7 @@ def filter_ads_tg(ads, criteria):
                 print(traceback.format_exc())
     return filtered
 
-def parse_addon(addon, params, good_description, strict=False):
+def parse_addon(addon, params, good_description, strict=False, telegram=False):
     addon = addon[0]
     if any("двое" in a for a in params['sex']) and (not any("Муж" in a for a in params['sex'])) or (not any ("Жен" in a for a in params['sex'])):
         params['sex'] = params['sex'] + ["Мужчина", "Женщина"]
@@ -564,17 +537,35 @@ def parse_addon(addon, params, good_description, strict=False):
     if "сколько людей живёт в настоящий момент в квартире" in addon:
         addon["сколько людей живёт в настоящий момент в квартире?"] = addon["сколько людей живёт в настоящий момент в квартире"] 
     try:
-        
-        
+        if telegram:
+            import pdb; pdb.set_trace()
+            exc_flag = False
+            rooms_list = []
+            try: 
+                for rooms in params['rooms']:
+                    
+                        rooms_list.append(rooms['rooms'])
+                        if ("сдача студ" in addon['классификация объявления']) or ('сдача однок' in addon['классификация объявления']) and ((1 == rooms['rooms']) and (rooms['min_price']) <= addon['стоимость месячной аренды'] <= rooms['max_price']):
+                            raise Exception
+                        if ("сдача двухкомнатной квартиры" in addon['классификация объявления']) and ((2 == rooms['rooms']) and (rooms['min_price']) <= addon['стоимость месячной аренды'] <= rooms['max_price']):
+                            raise Exception
+                        if ("сдача трехкомнатной квартиры" in addon['классификация объявления']) and ((3 == rooms['rooms']) and (rooms['min_price']) <= addon['стоимость месячной аренды'] <= rooms['max_price']):
+                            raise Exception
+                        if ("сдача комнаты" in addon['классификация объявления']) and ((0 == rooms['rooms']) and (rooms['min_price']) <= addon['стоимость месячной аренды'] <= rooms['max_price']):
+                            raise Exception 
+            except:
+                exc_flag = True
+            finally:
+                if not exc_flag:
+                    raise Exception
+         
       ##  if "не указано" in addon['можно ли заселиться с животными'] and not any("про животных" in a for a in params['animal']) and params['animal'] != []:
         #s    raise Exception
         if ("не ука" in str(addon["сколько людей живёт в настоящий момент в квартире?"])) or (addon["сколько людей живёт в настоящий момент в квартире?"] <=1 ) or (any("одного" in a for a in params['mates'])) or (((len(list(addon['кто живёт в настоящий момент'].values()))) == 1) and any("Один" in a for a in params['mates'])):
-            #import pdb;pdb.set_trace()
             print(len(list(addon['кто живёт в настоящий момент'].values())))
             mates = addon['кто живёт в настоящий момент']
             for mate in mates:
                 if not any('никто' in a for a in  mates) or len(mates) != 1:
-                
                     if (any("женщина" in a for a in [mate]) or any("женщина" in str(a) for a in addon['кто живёт в настоящий момент'][mate])) and not any("Женщины" in a for a in params['mates']) and any("Мужчины" in a for a in params['mates']):
                         raise Exception
                     if (any("мужчина" in a for a in [mate]) or any("мужчина" in str(a) for a in  addon['кто живёт в настоящий момент'][mate])) and not any("Мужчины" in a for a in params['mates']) and any("Женщины" in a for a in params['mates']):
@@ -874,8 +865,8 @@ def main():
            # import pdb;pdb.set_trace
           
             keyboard = types.InlineKeyboardMarkup()
-            #list = [types.InlineKeyboardButton('Двухкомнатные квартиры', callback_data='start 2'), types.InlineKeyboardButton('Однокомнатные квартиры', callback_data='start 1'), types.InlineKeyboardButton('Комнаты', callback_data='start 0')]
-            list = [types.InlineKeyboardButton('Комнаты', callback_data='start 0')]
+            list = [types.InlineKeyboardButton('Трехкомнатные квартиры', callback_data='start 3'), types.InlineKeyboardButton('Двухкомнатные квартиры', callback_data='start 2'), types.InlineKeyboardButton('Однокомнатные квартиры', callback_data='start 1'), types.InlineKeyboardButton('Комнаты', callback_data='start 0')]
+            #list = [types.InlineKeyboardButton('Комнаты', callback_data='start 0')]
             if call.data.split()[1] == "continue":
                 get_rooms(call.message)
                 #bot.register_next_step_handler(call.message, lambda msg: get_rooms(msg, rooms=TINY_DB[call.data.message.chat.id]))
@@ -912,7 +903,7 @@ def main():
         keyboard = types.InlineKeyboardMarkup()
         button_bar = types.InlineKeyboardButton('Приступим🏃‍♀️🏃🚴‍♂️', callback_data='startstart') 
         keyboard.add(button_bar)
-        bot.send_message(message.chat.id, "Привет, я бот, который поможет тебе найти комнату в Москве*\n\nДля начала нужно заполнить анкету, приступим?", reply_markup=keyboard)
+        bot.send_message(message.chat.id, "Привет, я бот, который поможет тебе найти жилье в Москве*\n\nДля начала нужно заполнить анкету, приступим?", reply_markup=keyboard)
         
         
     
@@ -977,8 +968,13 @@ def main():
         keyboard = types.InlineKeyboardMarkup()
         button_bar = types.InlineKeyboardButton('Комнаты ', callback_data='start 0')
         keyboard.add(button_bar)
-        
-        TINY_DB[message.chat.id]['rooms_input'] = [False]
+        button_bar = types.InlineKeyboardButton('Однокомнатные квартиры', callback_data='start 1')
+        keyboard.add(button_bar)
+        button_bar = types.InlineKeyboardButton('Двухкомнатные квартиры', callback_data='start 2')
+        keyboard.add(button_bar)
+        button_bar = types.InlineKeyboardButton('Трехкомнатные квартиры', callback_data='start 3')
+        keyboard.add(button_bar)
+        TINY_DB[message.chat.id]['rooms_input'] = [False, False, False, False]
         
         bot.send_message(message.chat.id, "Что будем искать?", reply_markup=keyboard)
     def get_rooms(message):

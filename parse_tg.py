@@ -67,10 +67,8 @@ def parse_tg():
                 except:
                     import traceback
                     print(traceback.format_exc())
-                
                     break
                 break_flag = False
-            
                 if channel in old_json:
                     pass
                 else:
@@ -88,9 +86,10 @@ def parse_tg():
                                 if any(d['post_id'] == post_list[j]['post_id'] for d in old_json[channel]):
                                         post_list.pop(j)
                                         break
+                    
                     for filtered_post in post_list:
                         global dt
-                        addon, good_description = chain_prompt(data=dt, desc=post_dict["text"], type = 1,telegram=True)
+                        addon, good_description = chain_prompt(data=dt, desc=filtered_post["text"], type = 1,telegram=True)
                         filtered_post["addon"] = addon
                         filtered_post["good_description"] = good_description
                         dt = {
@@ -98,7 +97,9 @@ def parse_tg():
     'messages': [ {'role': 'user', 'content': r"{0} {1}"}
     ]}
                     old_json[channel] = old_json[channel] + post_list
+                  #  import pdb; pdb.set_trace()
                     save_cache_tg(post_list)
+                    
             while True:
                 try:
                     print(3)

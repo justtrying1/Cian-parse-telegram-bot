@@ -339,8 +339,8 @@ def parse( i_min, i_max, preload=False, room1=1, room2=0, no_room=False):
             pass
 import traceback
 import gc
-#parse(2,25,room1=1,room2=1, no_room=True, preload=True) # NO ROOOOOOOOM!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#parse(2,25,room1=1,room2=1, no_room=False, preload=True)   # YES ROOOOOOM!!!!!!!!!!!!!!!!!!!!!
+parse(2,25,room1=1,room2=1, no_room=True, preload=True) # NO ROOOOOOOOM!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+parse(2,30,room1=1,room2=1, room3=1, no_room=False, preload=True)   # YES ROOOOOOM!!!!!!!!!!!!!!!!!!!!!
 tracemalloc.start()
 while True:
     then = datetime.now()
