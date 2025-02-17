@@ -166,8 +166,13 @@ def save_cache_tg(appeared):
   
     all_params = load_parameters()
     sent_list = {}
-    cache = load_cache()
+   # cache = load_cache()
     for i in all_params.keys():
+        try:
+            all_params[i]['mates']
+        except:
+            continue
+
         if all_params[i] == {}:
             try:
                 continue
@@ -179,26 +184,12 @@ def save_cache_tg(appeared):
         new_filtered_ads = filter_ads_tg(appeared, all_params.get(i))
         sent_list[chat_id] = str(len(new_filtered_ads))
        
-        if str(chat_id) not in cache.keys():
-            cache[str(chat_id)] = {}
-      
-        try:
-            if isinstance(cache[str(chat_id)]['last 20'], list):
-                cache[str(chat_id)]['last 20'] = {}
-        except:
-            pass
-        if 'last 20' in cache[str(chat_id)].keys():
-            pass
-        else:
-            cache[str(chat_id)]['last 20'] = {}
-        if len(cache[str(chat_id)]['last 20'].keys()) > 20:
-            for j in list(cache[str(chat_id)]['last 20'].keys())[:-20]:
-                cache[str(chat_id)]['last 20'].pop(j)
+       
         if(len(new_filtered_ads)) > 0:
             try:
                 parsed_count = 0
                 for ad in new_filtered_ads:
-                    cache[str(chat_id)]['last 20'][ad['post_id']] = ad['text']        
+                       
                     msg = f"источник: {ad['link']}\n"
                     if 'addon' in ad:
                         parsed_addon = parse_addon(ad['addon'], params=all_params.get(i), good_description=ad['good_description'])
@@ -206,6 +197,7 @@ def save_cache_tg(appeared):
                     else:
                         parsed_addon = ""  
                     sub_flag = False
+                    
                     if parsed_addon != "":
                         parsed_count = parsed_count + 1 
                         print("addon parsed!")
@@ -213,14 +205,10 @@ def save_cache_tg(appeared):
                         if ("test_subscription" not in all_params[i]) & ("subscription" not in all_params[i]):
                             sub_flag = True
                         elif get_subscription_state(chat_id)[0]:
-                            bot.send_message(chat_id, msg, reply_markup=keyboard)   
+                            bot.send_message(chat_id, msg)   
                         else:
                             sub_flag = True
-                
-                       
-                    
                     elif chat_id == 7494874190:
-                        
                         bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n")
             
                 
@@ -257,7 +245,7 @@ def save_cache(appeared):
   
     all_params = load_parameters()
     sent_list = {}
-    cache = load_cache()
+   # cache = load_cache()
 
     for i in all_params.keys():
        # import pdb; pdb.set_trace()
@@ -273,21 +261,7 @@ def save_cache(appeared):
         new_filtered_ads = filter_ads(appeared, all_params.get(i))
         sent_list[chat_id] = str(len(new_filtered_ads))
        
-        if str(chat_id) not in cache.keys():
-            cache[str(chat_id)] = {}
-      
-        try:
-            if isinstance(cache[str(chat_id)]['last 20'], list):
-                cache[str(chat_id)]['last 20'] = {}
-        except:
-            pass
-        if 'last 20' in cache[str(chat_id)].keys():
-            pass
-        else:
-            cache[str(chat_id)]['last 20'] = {}
-        if len(cache[str(chat_id)]['last 20'].keys()) > 20:
-            for j in list(cache[str(chat_id)]['last 20'].keys())[:-20]:
-                cache[str(chat_id)]['last 20'].pop(j)
+        
         if(len(new_filtered_ads)) > 0:
              
            # import pdb; pdb.set_trace()            
@@ -296,7 +270,7 @@ def save_cache(appeared):
               #  import pdb; pdb.set_trace()
                 parsed_count = 0
                 for ad in new_filtered_ads:
-                    cache[str(chat_id)]['last 20'][ad['url']] = ad['description']  
+                  
                     
                     time_ = datetime.strptime(ad['time'], '%Y-%m-%d %H-%M-%S')
                     button_bar = types.InlineKeyboardButton('Показать описание', callback_data='{}'.format(ad['url']))
@@ -1148,8 +1122,9 @@ def main():
         
         save_parameters(all_params) 
         all_params = load_parameters()
-        
+        send_old_ads_tg(message, all_params)
         send_old_ads(message, all_params) 
+        
         
     bot.polling(none_stop=True)
                
