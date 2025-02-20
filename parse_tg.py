@@ -33,7 +33,7 @@ from telegrambot import save_cache_tg
 #driver = webdriver.Firefox(executable_path=r"C:\Users\pcpcc\Documents\GitHub\sdafdsf\geckodriver.exe")
 
 url_base = "https://t.me/s/"
-channel_list = ['Flats_for_friend', 'arenda_moskva_mo']
+channel_list = ['Flats_for_friend', 'nebabushkin_msk', 'norealtor', 'arendamsc']
 
 JSON_FILE = "tg_posts.json"
 
@@ -48,7 +48,7 @@ def load_old(JSON_FILE=JSON_FILE):
 
 def parse_tg():
     while True:
-       
+
         old_json = load_old()
         for channel in channel_list:
             post_list = []
@@ -75,18 +75,17 @@ def parse_tg():
                     old_json[channel] = []
                # import pdb; pdb.set_trace()
                 if len(post_list) > 0:
-                    if any(d['post_id'] == post_list[-1]['post_id'] for d in old_json[channel]):  
-                        flag1 = False  
-                        while True:
-                            if(break_flag):
-                                break
-                            for j in range(-1, -len(post_list)-1, -1):
-                                if(-len(post_list) == j):  
-                                    break_flag = True
-                                if any(d['post_id'] == post_list[j]['post_id'] for d in old_json[channel]):
-                                        post_list.pop(j)
-                                        break
-                    
+                     
+                          
+                    while True:
+                        if(break_flag):
+                            break
+                        for j in range(-1, -len(post_list)-1, -1):
+                            if(-len(post_list) == j):  
+                                break_flag = True
+                            if any(d['post_id'] == post_list[j]['post_id'] for d in old_json[channel]):
+                                    post_list.pop(j)
+                                    break
                     for filtered_post in post_list:
                         global dt
                         addon, good_description = chain_prompt(data=dt, desc=filtered_post["text"], type = 1,telegram=True)

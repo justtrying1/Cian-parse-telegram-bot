@@ -32,8 +32,7 @@ def offer_list_updated(offer_list ,disappeared, appeared):
     for i in range(len(disappeared)):
         for j in range(len(offer_list)):
             if offer_list[j]['url'] == disappeared[i]['url']:
-                offer_list.pop(j)
-                
+                offer_list.pop(j)   
                 break
    
    
@@ -128,12 +127,13 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
                        deal_type=deal_type, 
                        room0=1)
     else:
-        url_base = partial("https://www.cian.ru/cat.php?currency=2&p={page}&deal_type={deal_type}&engine_version=2&sort=creation_date_desc&maxprice={max_price}&minprice={min_price}&offer_type=flat&region={city_id}&room1={room1}&room2={room2}&type=4".format, max_price=max_price, 
+        url_base = partial("https://www.cian.ru/cat.php?currency=2&p={page}&deal_type={deal_type}&engine_version=2&sort=creation_date_desc&maxprice={max_price}&minprice={min_price}&offer_type=flat&region={city_id}&room1={room1}&room2={room2}&room3={room3}&type=4".format, max_price=max_price, 
                         min_price=min_price, 
                         city_id=city_dict[city], 
                         deal_type=deal_type, 
                         room1=room1, 
-                        room2=room2)
+                        room2=room2,
+                        room3=room3)
     flag = False
     while True:
        # import pdb; pdb.set_trace()
@@ -235,12 +235,8 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
         print(datetime.now())
         page += 1
         url_list = list(dict.fromkeys(url_list))
-       
-        
         if(flag or (page == 4) or break_flag): 
             if preload:
-          
-                
                 if len(offer_list) > 0:
                     if any(d['url'] == offer_list[-1]['url'] for d in old[str(i)]):  
                         flag1 = False  
@@ -256,10 +252,10 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
                                         
                                         break
             if no_room and not preload:               
-                if len(offer_list) > 20:
+                if len(offer_list) > 100:
                     global skipped
                     skipped  = skipped + len(offer_list)
-                if len(offer_list) <= 20:        
+                if len(offer_list) <= 100:        
                     for filtered_offer in offer_list:
                         #import pdb; pdb.set_trace()
 
@@ -281,7 +277,7 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
             break
 
 
-def parse( i_min, i_max, preload=False, room1=1, room2=0, no_room=False):
+def parse( i_min, i_max, preload=False, room1=1, room2=0, room3=0, no_room=False):
 
     first_time = True
                         
@@ -290,7 +286,7 @@ def parse( i_min, i_max, preload=False, room1=1, room2=0, no_room=False):
     #offer_list = []        
     #import pdb; pdb.set_trace()
     for i in range(i_min, i_max):
-        get_urls(i, min_price=i*5000, max_price=((i+1)*5000)-1, city="Москва", deal_type="rent",room2=room2,room1=room1,no_room=no_room, preload=preload)
+        get_urls(i, min_price=i*5000, max_price=((i+1)*5000)-1, city="Москва", deal_type="rent",room2=room2,room1=room1,no_room=no_room,room3=room3, preload=preload)
     
         location_ = os.path.realpath(
             os.path.join(os.getcwd(), os.path.dirname("goo.py")))
@@ -339,14 +335,14 @@ def parse( i_min, i_max, preload=False, room1=1, room2=0, no_room=False):
             pass
 import traceback
 import gc
-parse(2,25,room1=1,room2=1, no_room=True, preload=True) # NO ROOOOOOOOM!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-parse(2,30,room1=1,room2=1, room3=1, no_room=False, preload=True)   # YES ROOOOOOM!!!!!!!!!!!!!!!!!!!!!
+#parse(2,25,room1=1,room2=1, no_room=True, preload=True) # NO ROOOOOOOOM!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#parse(2,30,room1=1,room2=1, room3=1, no_room=False, preload=True)   # YES ROOOOOOM!!!!!!!!!!!!!!!!!!!!!
 tracemalloc.start()
 while True:
     then = datetime.now()
     parse(2,10,room1=0,room2=0, no_room=True)    
    # parse(2,10,room1=1,room2=1, no_room=False)    
-   # parse(5,25,room1=1,room2=1)
+    parse(5,25,room1=1,room2=1, room3=1)
     print(datetime.now() - then )
     print("skipped " + str(skipped))
     skipped = 0

@@ -1,7 +1,7 @@
 
 #API_TOKEN = '7006315291:AAE_Nb6L-pNyVi5tFylMycjZnkAYrkkzyYs'  # Замените на ваш токен
 API_TOKEN = '7535762439:AAFtiztp9pG3JsPnX7T7IRjuB6cQtqe5sno'
-JSON_FILE_PATH = '&rent&30000&40000&1 room&Москва&2024-09-30 22-40-46.json'
+JSON_FILE_PATH = r'&rent&30000&40000&1 room&Москва&2024-09-30 22-40-46.json'
 import telebot
 import json
 import time
@@ -171,6 +171,7 @@ def save_cache_tg(appeared):
         try:
             all_params[i]['mates']
         except:
+            print(traceback.format_exc())
             continue
 
         if all_params[i] == {}:
@@ -209,7 +210,7 @@ def save_cache_tg(appeared):
                         else:
                             sub_flag = True
                     elif chat_id == 7494874190:
-                        bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n")
+                        bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n" + "\ncheck")
             
                 
                 if parsed_count > 0: 
@@ -286,7 +287,7 @@ def save_cache(appeared):
                         parsed_addon = ""
                     
                     sub_flag = False
-                    if parsed_addon != "":
+                    if (parsed_addon != "") or ad['rooms_count'] > 0:
                         parsed_count = parsed_count + 1 
                         print("addon parsed!")
                     
@@ -300,7 +301,8 @@ def save_cache(appeared):
                        
                     
                     elif chat_id == 7494874190:
-        
+                        if 'good_description' not in ad:
+                            ad['good_description'] = ""
                         bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n")
             
                 
@@ -338,8 +340,14 @@ def get_chat_parameters(chat_id):
     return all_params.get(str(chat_id), None)
 # Функция для загрузки объявлений из локального JSON
 def load_ads(JSON_FILE_PATH=JSON_FILE_PATH):
-    with open(JSON_FILE_PATH, 'r', encoding='utf-8') as file:
-        return json.load(file)
+    while True:
+        try:
+            with open(JSON_FILE_PATH, 'r', encoding='utf-8') as file:
+                return json.load(file)
+            break
+        except:
+            print(traceback.format_exc())
+            
 
 def send_old_ads_tg(message, params,dont_flag = 0, flag = False):
     all_params = params
@@ -390,7 +398,8 @@ def send_old_ads_tg(message, params,dont_flag = 0, flag = False):
             params['rooms'][0]['max_price'] = params['rooms'][0]['max_price'] + 2500
         if dont_flag > 3:
             params['undergrounds'] = ".*"
- 
+        if dont_flag > 4:
+            return
         all_params[str(message.chat.id)] = params
         send_old_ads_tg(message, all_params,dont_flag, flag=True)
     
@@ -402,7 +411,7 @@ def send_old_ads(message, params,dont_flag = 0, flag = False):
     do_flag = False
     for segment in ads:
             for ad in ads[segment][-100:]:  
-                if 'addon' in ad:
+                if 'addon' in ad or (ad['rooms_count'] > 0):
                     if segment not in ads_to_filter:
                         ads_to_filter[segment] = []
                     ads_to_filter[segment] = ads_to_filter[segment] + [ad]
@@ -420,14 +429,14 @@ def send_old_ads(message, params,dont_flag = 0, flag = False):
 🏘район: {ad['district']}
 🔗источник: {ad['url']}\n
     """
-            if 'addon' in ad:
+            if 'addon' in ad :
                 parsed_addon = parse_addon(ad['addon'], params=params, good_description=ad['good_description'])
                 msg = msg + parsed_addon  
                         #  import pdb; pdb.set_trace()
             else:
                 parsed_addon = ""
             
-            if parsed_addon != "":
+            if parsed_addon != "" or (ad['rooms_count'] > 0):
                 bot.send_message(message.chat.id, msg)
                 count = count + 1 
                 do_flag = True
@@ -450,7 +459,8 @@ def send_old_ads(message, params,dont_flag = 0, flag = False):
             params['rooms'][0]['max_price'] = params['rooms'][0]['max_price'] + 2500
         if dont_flag > 3:
             params['undergrounds'] = ".*"
-        
+        if dont_flag > 4:
+            return
         all_params[str(message.chat.id)] = params
         send_old_ads(message, all_params,dont_flag, flag=True)
         
@@ -492,6 +502,7 @@ def filter_ads(ads, criteria):
                             ad['rooms_count'] == room_criteria['rooms'] and (list(filter(re.compile ( criteria['undergrounds'] ).match, ad['underground'])) or list(filter(re.compile ( criteria['undergronuds'] ).match, ad['geolabel'])) or list(filter(re.compile ( criteria['undergronuds'] ).match, ad['district'])) )):
                             filtered.append(ad)
                     except:    
+                        print(traceback.format_exc())
                         if (metro_dist <= criteria['metro_dist'] + 8 and room_criteria['min_price'] <= ad['price_per_month'] <= room_criteria['max_price'] and
                             ad['rooms_count'] == room_criteria['rooms'] and
                             ((list(filter(re.compile(ad['underground'].lower()).match, list(map(lambda x: x.lower(),criteria['undergrounds']))) or list(filter(re.compile ( ad['geolabel'] ).match, list(map(lambda x: x.lower(),criteria['undergrounds']))) or list(filter(re.compile ( ad['district'] ).match, list(map(lambda x: x.lower(),criteria['undergrounds']))))))))):
@@ -503,6 +514,7 @@ def filter_ads(ads, criteria):
                             ad['rooms_count'] == room_criteria['rooms'] and (list(filter(re.compile ( criteria['undergrounds'] ).match, ad['underground'])) or (list(filter(re.compile ( criteria['undergrounds'] ).match, ad['geolabel']))) or (list(filter(re.compile ( criteria['undergronuds'] ).match, ad['district']))))):
                             filtered.append(ad)
                     except:    
+                        print(traceback.format_exc())
                         if (metro_dist < criteria['metro_dist'] and room_criteria['min_price'] <= ad['price_per_month'] <= room_criteria['max_price'] and
                             ad['rooms_count'] == room_criteria['rooms'] and
                             (list(filter(re.compile(ad['underground']).match, list(map(lambda x: x.lower(),criteria['undergrounds'])))))or (list(filter(re.compile ( ad['geolabel'] ).match, list(map(lambda x: x.lower(),criteria['undergrounds'])))) or (list(filter(re.compile ( ad['district'] ).match, list(map(lambda x: x.lower(),criteria['undergrounds']))))))):
@@ -511,7 +523,8 @@ def filter_ads(ads, criteria):
                 elif criteria['author_type'] == "Владелец" and ad['author_type'] != "Владелец":
                     break
             except KeyError:
-                pass        
+                pass   
+                print(traceback.format_exc())     
     return filtered
 def filter_ads_tg(ads, criteria):
     filtered = []
@@ -528,22 +541,30 @@ def filter_ads_tg(ads, criteria):
 
 def parse_addon(addon, params, good_description, strict=False, telegram=False):
     addon = addon[0]
-    if any("двое" in a for a in params['sex']) and (not any("Муж" in a for a in params['sex'])) or (not any ("Жен" in a for a in params['sex'])):
+    if any("двое" in a for a in params['sex']) and ((not any("Муж" in a for a in params['sex'])) or (not any ("Жен" in a for a in params['sex']))):
         params['sex'] = params['sex'] + ["Мужчина", "Женщина"]
     if not any("Один" in a for a in params['mates']) and not any("одного" in a for a in params['mates']):
         params['mates'].append("одного")
-
     flag = True
     if "сколько людей живёт в настоящий момент в квартире" in addon:
-        addon["сколько людей живёт в настоящий момент в квартире?"] = addon["сколько людей живёт в настоящий момент в квартире"] 
+        addon["сколько людей живет в настоящий момент в квартире?"] = addon["сколько людей живёт в настоящий момент в квартире"] 
     try:
         if telegram:
-            import pdb; pdb.set_trace()
+            #import pdb; pdb.set_trace()
+            if "классификация объявления" not in addon:
+                raise Exception
+            elif ("поиск" in addon['классификация объявления']) and (not "поиск соседа" in addon['классификация объявления']):
+                raise Exception
+            if "сдача комнаты" not in addon["классификация объявления"]:
+                addon['кто живёт в настоящий момент'] = {
+                                    "никто": []
+                              }
+                addon["сколько людей живет в настоящий момент в квартире"] = 0
+
             exc_flag = False
             rooms_list = []
             try: 
-                for rooms in params['rooms']:
-                    
+                for rooms in params['rooms']:      
                         rooms_list.append(rooms['rooms'])
                         if ("сдача студ" in addon['классификация объявления']) or ('сдача однок' in addon['классификация объявления']) and ((1 == rooms['rooms']) and (rooms['min_price']) <= addon['стоимость месячной аренды'] <= rooms['max_price']):
                             raise Exception
@@ -552,7 +573,8 @@ def parse_addon(addon, params, good_description, strict=False, telegram=False):
                         if ("сдача трехкомнатной квартиры" in addon['классификация объявления']) and ((3 == rooms['rooms']) and (rooms['min_price']) <= addon['стоимость месячной аренды'] <= rooms['max_price']):
                             raise Exception
                         if ("сдача комнаты" in addon['классификация объявления']) and ((0 == rooms['rooms']) and (rooms['min_price']) <= addon['стоимость месячной аренды'] <= rooms['max_price']):
-                            raise Exception 
+                            raise Exception
+                        
             except:
                 exc_flag = True
             finally:
@@ -561,7 +583,7 @@ def parse_addon(addon, params, good_description, strict=False, telegram=False):
          
       ##  if "не указано" in addon['можно ли заселиться с животными'] and not any("про животных" in a for a in params['animal']) and params['animal'] != []:
         #s    raise Exception
-        if ("не ука" in str(addon["сколько людей живёт в настоящий момент в квартире?"])) or (addon["сколько людей живёт в настоящий момент в квартире?"] <=1 ) or (any("одного" in a for a in params['mates'])) or (((len(list(addon['кто живёт в настоящий момент'].values()))) == 1) and any("Один" in a for a in params['mates'])):
+        if  (any("одного" in a for a in params['mates'])) or (((len(list(addon['кто живёт в настоящий момент'].values()))) == 1) and any("Один" in a for a in params['mates'])):
             print(len(list(addon['кто живёт в настоящий момент'].values())))
             mates = addon['кто живёт в настоящий момент']
             for mate in mates:
@@ -779,7 +801,7 @@ def main():
                 bot.clear_step_handler_by_chat_id(chat_id=call.message.chat.id)
                 check_undergrounds(call.message)
             if 'retry' in call.data:
-                bot.send_message(call.message.chat.id, "*Через запятую* укажите автономный округ или станцию метро или район, пример: (СЗАО, САО, Маяковская, Алексеевская")
+                bot.send_message(call.message.chat.id, "*Через запятую* укажите автономный округ или станцию метро или район, пример: (СЗАО, НАО, Маяковская, Алексеевская")
                 bot.register_next_step_handler(call.message, lambda msg: get_undergrounds(msg))
                 
         if 'period' in call.data:
@@ -892,7 +914,7 @@ def main():
                 msg = bot.send_message(call.message.chat.id, f"📔📔 Описание\n\n {a[str(call.message.chat.id)]['last 20'][call.data]}", reply_to_message_id=call.message.id)
                 bot.pin_chat_message(chat_id=msg.chat.id, message_id=msg.message_id)
             except:
-                pass
+                print(traceback.format_exc())
             
         # button_foo = types.InlineKeyboardButton('Показать новые', callback_data='new')
     
@@ -903,7 +925,7 @@ def main():
         keyboard = types.InlineKeyboardMarkup()
         button_bar = types.InlineKeyboardButton('Приступим🏃‍♀️🏃🚴‍♂️', callback_data='startstart') 
         keyboard.add(button_bar)
-        bot.send_message(message.chat.id, "Привет, я бот, который поможет тебе найти жилье в Москве*\n\nДля начала нужно заполнить анкету, приступим?", reply_markup=keyboard)
+        bot.send_message(message.chat.id, "Привет, я бот, который поможет тебе найти жилье в Москве*\n Я пришлю подходящее под тебя объявление как только оно появится, в этом мне поможет ChatGPT - он обрабатывает объявления прежде чем прислать тебе\nДля начала нужно заполнить анкету, приступим?", reply_markup=keyboard)
         
         
     
@@ -936,7 +958,7 @@ def main():
         keyboard.add(button_bar)
         keyboard.add(button_bar2)
         TINY_DB[message.chat.id]['mates_input'] = [False, False, False, False]
-        bot.send_message(message.chat.id, "Отлично. Кого бы вы хотели видеть в вашх соседях?\n" 
+        bot.send_message(message.chat.id, "Отлично. Кого бы вы хотели видеть в вашх соседях (Это нужно для комнат)?\n" 
                          "Можно выбрать несколько.", reply_markup=keyboard)
         
     def get_rent_period(message):
@@ -988,11 +1010,16 @@ def main():
                 if rooms_input[i]:
                     rooms.append({'rooms': i, 'min_price': None, 'max_price': None})
             # Сохраняем количество комнат в контексте пользователя
-            bot.send_message(message.chat.id, "Напишите минимальную арендную плату. (Например: 30000)".format(rooms[0]['rooms']))
+            if rooms[0]['rooms'] == 0:
+
+                bot.send_message(message.chat.id, "Напишите минимальную арендную плату для комнат. (Например: 30000)".format(rooms[0]['rooms']))
+            else:
+                bot.send_message(message.chat.id, "Напишите минимальную для {}-комнатных вариантов арендную плату. (Например: 30000)".format(rooms[0]['rooms']))
             TINY_DB[message.chat.id]['rooms'] = rooms                                   
             
             bot.register_next_step_handler(message, lambda msg: get_min_price(msg))
         except ValueError:
+            print(traceback.format_exc())
             bot.send_message(message.chat.id, "Пожалуйста, введите корректные числа.")
 
     def get_min_price(message, next_=0, rooms=0):
@@ -1094,7 +1121,7 @@ def main():
             if "subscription" in all_params[str(message.chat.id)]:
                 subsubflag = all_params[str(message.chat.id)]["subscription"]
         except:
-            pass
+            print(traceback.format_exc())
             # Сохранение параметров для текущего чата
         all_params[str(message.chat.id)] = {
             'username':TINY_DB[message.chat.id]['username'],
@@ -1118,6 +1145,7 @@ def main():
         
         save_parameters(all_params) 
         all_params = load_parameters()
+       # import pdb;pdb.set_trace()
         send_old_ads_tg(message, all_params)
         send_old_ads(message, all_params) 
         
