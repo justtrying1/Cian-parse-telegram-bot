@@ -191,7 +191,7 @@ def save_cache_tg(appeared):
                 parsed_count = 0
                 for ad in appeared:
                        
-                    msg = f"источник: {ad['link']}\n"
+                    msg = f"источник: {"https://flatoon.pythonanywhere.com/?url="+ad['link'].split("https://")[1]}\n"
                     if 'addon' in ad:
                         parsed_addon = parse_addon(ad['addon'], params=all_params.get(i), good_description=ad['good_description'], telegram=True)
                         msg = parsed_addon + msg   
@@ -277,7 +277,7 @@ def save_cache(appeared):
 🧍‍♂️автор: {ad['author_type']}
 💸цена: {ad['price_per_month']}₽
 🏘район: {ad['district']}
-🔗источник: {ad['url']}\n
+🔗источник: {"https://flatoon.pythonanywhere.com/?url="+ad['url'].split("https://")[1]}\n
 """
                     if 'addon' in ad:
                         parsed_addon = parse_addon(ad['addon'], params=all_params.get(i), good_description=ad['good_description'])
@@ -448,7 +448,7 @@ def send_old_ads(message, params,dont_flag = 0, flag = False):
             bot.send_message(message.chat.id, "К сожалению по вашему запросу не нашлось недавних объявлений. Поиск был расширен")
         else:
             bot.send_message(message.chat.id, "Вот некоторые недавние объявления, которые могут подойти под ваш запрос, также я буду уведомлять Вас о всех новых объявлениях, как только они появятся. \n t.me/FlatoonChat - все-все-все объявления")
-        bot.send_message(message.chat.id, "Чтобы получать новые объявления необходимо выполнить активацию тестовой подписки с помощью команды /test_subscription")
+       
         all_params[str(message.chat.id)] = params
         save_parameters(all_params)
     else:
@@ -1148,6 +1148,8 @@ def main():
        # import pdb;pdb.set_trace()
         send_old_ads_tg(message, all_params)
         send_old_ads(message, all_params) 
+        activate_test_subscription(message)
+
         
         
     bot.polling(none_stop=True)

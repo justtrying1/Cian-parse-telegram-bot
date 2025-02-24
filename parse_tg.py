@@ -33,7 +33,7 @@ from telegrambot import save_cache_tg
 #driver = webdriver.Firefox(executable_path=r"C:\Users\pcpcc\Documents\GitHub\sdafdsf\geckodriver.exe")
 
 url_base = "https://t.me/s/"
-channel_list = ['Flats_for_friend', 'nebabushkin_msk', 'norealtor', 'arendamsc']
+channel_list = ['Flats_for_friend', 'nebabushkin_msk', 'norealtor', 'arendamsc', 'ugnest_msk']
 
 JSON_FILE = "tg_posts.json"
 
