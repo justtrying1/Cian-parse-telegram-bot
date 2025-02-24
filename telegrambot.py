@@ -918,16 +918,70 @@ def main():
             
         # button_foo = types.InlineKeyboardButton('Показать новые', callback_data='new')
     
+    user_data = {}
+    from ai import dialogue
+
     @bot.message_handler(commands=['start'])
     def start(message):
-        TINY_DB[message.chat.id] = {}
-        TINY_DB[message.chat.id]['username'] = message.from_user.username
-        keyboard = types.InlineKeyboardMarkup()
-        button_bar = types.InlineKeyboardButton('Приступим🏃‍♀️🏃🚴‍♂️', callback_data='startstart') 
-        keyboard.add(button_bar)
-        bot.send_message(message.chat.id, "Привет, я бот, который поможет тебе найти жилье в Москве*\n Я пришлю подходящее под тебя объявление как только оно появится, в этом мне поможет ChatGPT - он обрабатывает объявления прежде чем прислать тебе\nДля начала нужно заполнить анкету, приступим?", reply_markup=keyboard)
+        bot.send_message(message.chat.id, "Бот просыпается ...")
+        user_id = message.from_user.id
+        user_data[user_id] =  {
+    'model': 'gpt-4o-2024-08-06', 
+    'messages': [ {'role': 'user', 'content': "{}".format(a)}
+    ]}
+       # import pdb; pdb.set_trace()
+        if len(user_data[user_id] ['messages'])>1:
+            user_data[user_id] ['messages'].append({"role":"user", "content":"{}".format(message.text)})
+        response = dialogue(user_data[user_id] )
+        user_data[user_id] ['messages'].append({"role": "assistant", "content":"{}".format(response)})
+        bot.send_message(message.chat.id, "{}".format(response))
+        bot.register_next_step_handler(message, lambda msg: cont(msg, data_=user_data[user_id]))
+    
+
+    def cont(message, data_):
+        user_id = message.from_user.id
+        import pdb; pdb.set_trace()
+        bot.send_message(message.chat.id, "Бот печатает ...")
+        if len(user_data[user_id] ['messages'])>1:
+            user_data[user_id] ['messages'].append({"role":"user", "content":"{}".format(message.text)})
+        response = dialogue(user_data[user_id])
+        if "ento konchita" in response:
+            all_params = load_parameters()
         
+            # Сохранение параметров для текущего чата
+            all_params[str(message.chat.id)] = ""
+            save_parameters(all_params)
         
+        if "beseda finita" in response:
+            response, json_string = response.split("beseda finita")
+            try:
+                params = json.loads(json_string)
+                all_params = load_parameters()
+                all_params[str(message.chat.id)] = params
+                save_parameters(all_params)
+        
+            except:
+                
+                import pdb; pdb.set_trace()
+                user_data[user_id]  = {
+    'model': 'gpt-4o-mini', 
+    'messages': [ {'role': 'user', 'content': "{} преобразуй этот json в корректный json, чтобы можно было преобразовать его с помощью json.loads() в python верни мне чистый json без всяких символов потому что я возьму твой response и засуну в json.loads() вот так json.loads(response) ".format(json_string)}
+    ]}
+                json_string = dialogue(user_data[user_id] )
+                params = json.loads(json_string)
+                params['username'] = message.from_user.username
+                all_params = load_parameters()
+                all_params[str(message.chat.id)] = params
+                save_parameters(all_params)
+                send_old_ads_tg(message, all_params)
+                send_old_ads(message, all_params) 
+                activate_test_subscription(message)
+                #print(traceback.format_exc())
+                
+                return
+        user_data[user_id]['messages'].append({"role": "assistant", "content":"{}".format(response)})
+        bot.send_message(message.chat.id, "{}".format(response))
+        bot.register_next_step_handler(message, lambda msg: cont(msg, data_=user_data[user_id]))
     
     @bot.message_handler(func=lambda message: True)
     def start_start(message):
