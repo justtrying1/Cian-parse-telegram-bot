@@ -4,5 +4,8 @@ import telebot
 bot = telebot.TeleBot(BOT_KEY)
 @bot.message_handler(commands=['start'])
 def buy(message):
-    bot.send_message(message.chat.id, "https://flatoon.ru")
+    try:
+        bot.send_message(message.chat.id, "https://flatoon.ru")
+    except:
+        pass
 bot.polling()

@@ -146,16 +146,12 @@ def get_stars(message):
 
 def save_action(chat_id, action_name):
     #import pdb; pdb.set_trace()
-    action = load_action()
+    action = load_cache()
     if str(chat_id) not in action.keys():
         action[str(chat_id)] = {}
-    action[str(chat_id)][datetime.now().strftime('%Y-%m-%d %H-%M-%S')] = action_name
-    if action_name == "i am here":
-        with open("heres.json", 'w', encoding='utf-8') as file:
-            json.dump(action, file, ensure_ascii=False)
-    else:
-        with open(ACTION_FILE, 'w', encoding='utf-8') as file:
-            json.dump(action, file, ensure_ascii=False)
+    action[str(chat_id)] = action_name
+    with open(CACHE_FILE, 'w', encoding='utf-8') as file:
+        json.dump(action, file, ensure_ascii=False)
     
 def load_cache():
     with open(CACHE_FILE, "r", encoding='utf-8') as file:
@@ -196,10 +192,10 @@ def save_cache_tg(appeared):
                         parsed_addon = parse_addon(ad['addon'], params=all_params.get(i), good_description=ad['good_description'], telegram=True)
                         msg = parsed_addon + msg   
                     else:
-                        parsed_addon = ""  
+                        parsed_addon = " "  
                     sub_flag = False
                     
-                    if parsed_addon != "":
+                    if parsed_addon != " ":
                         parsed_count = parsed_count + 1 
                         print("addon parsed!")
                        
@@ -284,10 +280,10 @@ def save_cache(appeared):
                         msg = parsed_addon + msg    
                   #  import pdb; pdb.set_trace()
                     else:
-                        parsed_addon = ""
+                        parsed_addon = " "
                     
                     sub_flag = False
-                    if (parsed_addon != "") or ad['rooms_count'] > 0:
+                    if (parsed_addon != " ") or ad['rooms_count'] > 0:
                         parsed_count = parsed_count + 1 
                         print("addon parsed!")
                     
@@ -302,7 +298,7 @@ def save_cache(appeared):
                     
                     elif chat_id == 7494874190:
                         if 'good_description' not in ad:
-                            ad['good_description'] = ""
+                            ad['good_description'] = " "
                         bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n")
             
                 
@@ -373,8 +369,8 @@ def send_old_ads_tg(message, params,dont_flag = 0, flag = False):
                 parsed_addon = parse_addon(ad['addon'], params=params, good_description=ad['good_description'], telegram=True)
                 msg = msg + parsed_addon  
             else:
-                parsed_addon = ""
-            if parsed_addon != "":
+                parsed_addon = " "
+            if parsed_addon != " ":
                 bot.send_message(message.chat.id, msg)
                 count = count + 1 
                 do_flag = True
@@ -434,9 +430,9 @@ def send_old_ads(message, params,dont_flag = 0, flag = False):
                 msg = msg + parsed_addon  
                         #  import pdb; pdb.set_trace()
             else:
-                parsed_addon = ""
+                parsed_addon = " "
             
-            if parsed_addon != "" or (ad['rooms_count'] > 0):
+            if parsed_addon != " " or (ad['rooms_count'] > 0):
                 bot.send_message(message.chat.id, msg)
                 count = count + 1 
                 do_flag = True
@@ -493,10 +489,16 @@ def filter_ads(ads, criteria):
                 dodo = (criteria['author_type'])
             except KeyError:
                 criteria['author_type'] = "Любой"
-            
+            if criteria['metro_dist'] == None:
+                criteria['metro_dist'] = 1000
+            if room_criteria['min_price'] == None:
+                room_criteria['min_price'] = 0
+            if room_criteria['max_price'] == None:
+                room_criteria['max_price'] = 1000000000
+                
             metro_dist = int(ad['metro_dist'].split(" ")[0])
             try:
-                if criteria['author_type'] == "Владелец" and ad['author_type'] == "Владелец":
+                if  ("Владелец" in criteria['author_type']) and ad['author_type'] == "Владелец":
                     try:
                         if (metro_dist <= criteria['metro_dist'] + 8 and room_criteria['min_price'] <= ad['price_per_month'] <= room_criteria['max_price'] and
                             ad['rooms_count'] == room_criteria['rooms'] and (list(filter(re.compile ( criteria['undergrounds'] ).match, ad['underground'])) or list(filter(re.compile ( criteria['undergronuds'] ).match, ad['geolabel'])) or list(filter(re.compile ( criteria['undergronuds'] ).match, ad['district'])) )):
@@ -566,13 +568,13 @@ def parse_addon(addon, params, good_description, strict=False, telegram=False):
             try: 
                 for rooms in params['rooms']:      
                         rooms_list.append(rooms['rooms'])
-                        if ("сдача студ" in addon['классификация объявления']) or ('сдача однок' in addon['классификация объявления']) and ((1 == rooms['rooms']) and (rooms['min_price']) <= addon['стоимость месячной аренды'] <= rooms['max_price']):
+                        if (("сдача студ" in addon['классификация объявления']) or ('сдача однок' in addon['классификация объявления'])) and (((1 == rooms['rooms']) and ((rooms['min_price']) <= addon['стоимость месячной аренды'] <= rooms['max_price']))):
                             raise Exception
-                        if ("сдача двухкомнатной квартиры" in addon['классификация объявления']) and ((2 == rooms['rooms']) and (rooms['min_price']) <= addon['стоимость месячной аренды'] <= rooms['max_price']):
+                        if (("сдача двухкомнатной квартиры" in addon['классификация объявления'])) and (((2 == rooms['rooms']) and ((rooms['min_price']) <= addon['стоимость месячной аренды'] <= rooms['max_price']))):
                             raise Exception
-                        if ("сдача трехкомнатной квартиры" in addon['классификация объявления']) and ((3 == rooms['rooms']) and (rooms['min_price']) <= addon['стоимость месячной аренды'] <= rooms['max_price']):
+                        if (("сдача трехкомнатной квартиры" in addon['классификация объявления']) and (((3 == rooms['rooms'])) and ((rooms['min_price']) <= addon['стоимость месячной аренды'] <= rooms['max_price']))):
                             raise Exception
-                        if ("сдача комнаты" in addon['классификация объявления']) and ((0 == rooms['rooms']) and (rooms['min_price']) <= addon['стоимость месячной аренды'] <= rooms['max_price']):
+                        if ("сдача комнаты" in addon['классификация объявления']) and (((0 == rooms['rooms']) and (rooms['min_price'] <= addon['стоимость месячной аренды'] <= rooms['max_price']))):
                             raise Exception
                         
             except:
@@ -692,7 +694,7 @@ def parse_addon(addon, params, good_description, strict=False, telegram=False):
         #print(addon['кто живёт в настоящий момент'])
         return msg
     else:
-        return "" #POPRAVm     
+        return " " #POPRAVm     
     
         
 def format_time_passed(item_time):
@@ -919,28 +921,36 @@ def main():
         # button_foo = types.InlineKeyboardButton('Показать новые', callback_data='new')
     
     user_data = {}
-    from ai import dialogue
+    from ai import dialogue, a 
 
     @bot.message_handler(commands=['start'])
     def start(message):
-        bot.send_message(message.chat.id, "Бот просыпается ...")
-        user_id = message.from_user.id
-        user_data[user_id] =  {
-    'model': 'gpt-4o-2024-08-06', 
-    'messages': [ {'role': 'user', 'content': "{}".format(a)}
-    ]}
-       # import pdb; pdb.set_trace()
-        if len(user_data[user_id] ['messages'])>1:
-            user_data[user_id] ['messages'].append({"role":"user", "content":"{}".format(message.text)})
-        response = dialogue(user_data[user_id] )
-        user_data[user_id] ['messages'].append({"role": "assistant", "content":"{}".format(response)})
-        bot.send_message(message.chat.id, "{}".format(response))
-        bot.register_next_step_handler(message, lambda msg: cont(msg, data_=user_data[user_id]))
+        params = load_parameters()
+        try:
+            if params[str(message.chat.id)] == "konchita":
+                return
+            if message.chat.id == 781665670:
+                raise Exception
+        except:
+                
+            bot.send_message(message.chat.id, "Бот просыпается ...")
+            user_id = message.from_user.id
+            user_data[user_id] =  {
+        'model': 'gpt-4o-2024-08-06', 
+        'messages': [ {'role': 'user', 'content': "{}".format(a)}
+        ]}
+        # import pdb; pdb.set_trace()
+            if len(user_data[user_id] ['messages'])>1:
+                user_data[user_id] ['messages'].append({"role":"user", "content":"{}".format(message.text)})
+            response = dialogue(user_data[user_id] )
+            user_data[user_id] ['messages'].append({"role": "assistant", "content":"{}".format(response)})
+            bot.send_message(message.chat.id, "{}".format(response))
+            bot.register_next_step_handler(message, lambda msg: cont(msg, data_=user_data[user_id]))
     
 
     def cont(message, data_):
         user_id = message.from_user.id
-        import pdb; pdb.set_trace()
+      #  import pdb; pdb.set_trace()
         bot.send_message(message.chat.id, "Бот печатает ...")
         if len(user_data[user_id] ['messages'])>1:
             user_data[user_id] ['messages'].append({"role":"user", "content":"{}".format(message.text)})
@@ -949,35 +959,49 @@ def main():
             all_params = load_parameters()
         
             # Сохранение параметров для текущего чата
-            all_params[str(message.chat.id)] = ""
+            all_params[str(message.chat.id)] = "konchita"
             save_parameters(all_params)
         
         if "beseda finita" in response:
+            save_action(chat_id=message.chat.id, action_name=user_data[user_id])
             response, json_string = response.split("beseda finita")
             try:
                 params = json.loads(json_string)
                 all_params = load_parameters()
                 all_params[str(message.chat.id)] = params
+                params['username'] = message.from_user.username
+                params['chat_id'] = message.chat.id
+                params['metro_dist'] = 1000
                 save_parameters(all_params)
-        
+                send_old_ads_tg(message, all_params)
+                send_old_ads(message, all_params) 
+                activate_test_subscription(message)
+                return
             except:
                 
-                import pdb; pdb.set_trace()
-                user_data[user_id]  = {
-    'model': 'gpt-4o-mini', 
-    'messages': [ {'role': 'user', 'content': "{} преобразуй этот json в корректный json, чтобы можно было преобразовать его с помощью json.loads() в python верни мне чистый json без всяких символов потому что я возьму твой response и засуну в json.loads() вот так json.loads(response) ".format(json_string)}
-    ]}
-                json_string = dialogue(user_data[user_id] )
-                params = json.loads(json_string)
-                params['username'] = message.from_user.username
+               # import pdb; pdb.set_trace()
+                while True:
+                    try:
+                        user_data[user_id]  = {
+            'model': 'gpt-4o-mini', 
+            'messages': [ {'role': 'user', 'content': "{} преобразуй этот json в корректный json, чтобы можно было преобразовать его с помощью json.loads() в python верни мне чистый json без всяких символов потому что я возьму твой response и засуну в json.loads() вот так json.loads(response) ".format(json_string)}
+            ]}
+                        json_string = dialogue(user_data[user_id] )
+                        params = json.loads(json_string)
+                        user_data[user_id] = params
+                        break
+                    except:
+                        pass
+                user_data[user_id]['username'] = message.from_user.username
+                user_data[user_id]['chat_id'] = message.chat.id
+                user_data[user_id]['metro_dist'] = 1000
+                #if user_data[user_id]['sex'] == 
                 all_params = load_parameters()
                 all_params[str(message.chat.id)] = params
                 save_parameters(all_params)
                 send_old_ads_tg(message, all_params)
                 send_old_ads(message, all_params) 
                 activate_test_subscription(message)
-                #print(traceback.format_exc())
-                
                 return
         user_data[user_id]['messages'].append({"role": "assistant", "content":"{}".format(response)})
         bot.send_message(message.chat.id, "{}".format(response))
