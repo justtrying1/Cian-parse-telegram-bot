@@ -124,13 +124,14 @@ def activate_test_subscription(message):
     all_params = load_parameters()
     if 'test_subscription' not in all_params[chat_id]:
 
-        all_params[chat_id]['test_subscription'] = (datetime.now() + timedelta(days=3)).strftime('%d-%m-%Y  %H:%M:%S')
+        all_params[chat_id]['test_subscription'] = (datetime.now() + timedelta(days=360)).strftime('%d-%m-%Y  %H:%M:%S')
         
         save_parameters(all_params)
 
-        bot.send_message(int(message.chat.id), "Ваша трёхдневная подписка активирована")
+      #  bot.send_message(int(message.chat.id), "Ваша трёхдневная подписка активирована")
     else:
-        bot.send_message(int(message.chat.id), "Вы уже использовали активацию тестовой подписки")
+        pass
+      #  bot.send_message(int(message.chat.id), "Вы уже использовали активацию тестовой подписки")
 
 def a(message):
     user_id = int(message.text)
@@ -223,7 +224,7 @@ def save_cache_tg(appeared):
 
                             bot.send_message(chat_id, text='Нравится ли вам сервис?', reply_markup=keyboard)
                         bot.send_message(chat_id, text='Появилось {} новых объявления по вашему запросу, чтобы поменять параметры воспользуйтесь командой /start\n'    
-                                        "t.me/FlatoonChat - канал со всеми объявлениями".format(str(parsed_count)))
+                                        "".format(str(parsed_count)))
                 
             except:
               #  if chat_id == 7494874190:
@@ -240,7 +241,7 @@ def save_cache(appeared):
 
     for i in all_params.keys():
        # import pdb; pdb.set_trace()
-        if all_params[i] == {}:
+        if all_params[i] == "konchita":
             try:
                 #bot.send_message(int(i), "Уважаемый пользователь, ваши данные были утеряны всвязи с техничискими неполадками, чтобы и дальше получать новые объявления пожалуйста пройдите заново регистрацию с помощью команды /start")
                 continue
@@ -248,7 +249,10 @@ def save_cache(appeared):
                 
                 print(traceback.format_exc())
                 continue
-        chat_id = all_params.get(i)['chat_id']
+        try:
+            chat_id = all_params.get(i)['chat_id']
+        except:
+            continue
         new_filtered_ads = filter_ads(appeared, all_params.get(i))
         sent_list[chat_id] = str(len(new_filtered_ads))
        
@@ -316,7 +320,7 @@ def save_cache(appeared):
 
                             bot.send_message(chat_id, text='Нравится ли вам сервис?', reply_markup=keyboard)
                         bot.send_message(chat_id, text='Появилось {} новых объявления по вашему запросу, чтобы поменять параметры воспользуйтесь командой /start\n'    
-                                        "t.me/FlatoonChat - канал со всеми объявлениями".format(str(parsed_count)))      
+                                        "".format(str(parsed_count)))      
             except:
                 print(traceback.format_exc())
        
@@ -415,6 +419,7 @@ def send_old_ads(message, params,dont_flag = 0, flag = False):
     for ads_segment in ads_to_filter:
         filtered_ads[ads_segment] = filter_ads(ads_to_filter[ads_segment], params)
     for ads_segment in filtered_ads:
+       # import pdb; pdb.set_trace()
         count = 0
         for ad in filtered_ads[ads_segment][-100:]:
             msg = f"""{ad['title']}
@@ -443,7 +448,7 @@ def send_old_ads(message, params,dont_flag = 0, flag = False):
         if flag:
             bot.send_message(message.chat.id, "К сожалению по вашему запросу не нашлось недавних объявлений. Поиск был расширен")
         else:
-            bot.send_message(message.chat.id, "Вот некоторые недавние объявления, которые могут подойти под ваш запрос, также я буду уведомлять Вас о всех новых объявлениях, как только они появятся. \n t.me/FlatoonChat - все-все-все объявления")
+            bot.send_message(message.chat.id, "Вот некоторые недавние объявления, которые могут подойти под ваш запрос, также я буду уведомлять Вас о всех новых объявлениях, как только они появятся.")
        
         all_params[str(message.chat.id)] = params
         save_parameters(all_params)
@@ -459,9 +464,6 @@ def send_old_ads(message, params,dont_flag = 0, flag = False):
             return
         all_params[str(message.chat.id)] = params
         send_old_ads(message, all_params,dont_flag, flag=True)
-        
-
-    
 
 # Функция для фильтрации объявлений по цене и количеству комнат
 def filter_ads(ads, criteria):
@@ -510,7 +512,7 @@ def filter_ads(ads, criteria):
                             ((list(filter(re.compile(ad['underground'].lower()).match, list(map(lambda x: x.lower(),criteria['undergrounds']))) or list(filter(re.compile ( ad['geolabel'] ).match, list(map(lambda x: x.lower(),criteria['undergrounds']))) or list(filter(re.compile ( ad['district'] ).match, list(map(lambda x: x.lower(),criteria['undergrounds']))))))))):
                         
                                 filtered.append(ad)
-                elif criteria['author_type'] != "Владелец":
+                elif   "Владелец" not in criteria['author_type']:
                     try:
                         if (metro_dist < criteria['metro_dist'] and room_criteria['min_price'] <= ad['price_per_month'] <= room_criteria['max_price'] and
                             ad['rooms_count'] == room_criteria['rooms'] and (list(filter(re.compile ( criteria['undergrounds'] ).match, ad['underground'])) or (list(filter(re.compile ( criteria['undergrounds'] ).match, ad['geolabel']))) or (list(filter(re.compile ( criteria['undergronuds'] ).match, ad['district']))))):
@@ -547,6 +549,7 @@ def parse_addon(addon, params, good_description, strict=False, telegram=False):
         params['sex'] = params['sex'] + ["Мужчина", "Женщина"]
     if not any("Один" in a for a in params['mates']) and not any("одного" in a for a in params['mates']):
         params['mates'].append("одного")
+    
     flag = True
     if "сколько людей живёт в настоящий момент в квартире" in addon:
         addon["сколько людей живет в настоящий момент в квартире?"] = addon["сколько людей живёт в настоящий момент в квартире"] 
@@ -555,14 +558,15 @@ def parse_addon(addon, params, good_description, strict=False, telegram=False):
             #import pdb; pdb.set_trace()
             if "классификация объявления" not in addon:
                 raise Exception
-            elif ("поиск" in addon['классификация объявления']) and (not "поиск соседа" in addon['классификация объявления']):
-                raise Exception
+            #elif ("поиск" in addon['классификация объявления']) and (not "поиск соседа" in addon['классификация объявления']):
+            #    raise Exception
             if "сдача комнаты" not in addon["классификация объявления"]:
                 addon['кто живёт в настоящий момент'] = {
                                     "никто": []
                               }
                 addon["сколько людей живет в настоящий момент в квартире"] = 0
-
+                if addon["стоимость месячной аренды"] == "не указано":
+                    addon["стоимость месячной аренды"] = 0
             exc_flag = False
             rooms_list = []
             try: 
@@ -725,9 +729,24 @@ def main():
     def callback_query(call):
       #  import pdb; pdb.set_trace()
         global TINY_DB
+        if "sub" in call.data:
+            all_params = load_parameters()
+           # import pdb; pdb.set_trace()
+            try:
+                bot.get_chat_member(chat_id=-1002495178490, user_id=call.message.from_user.id)
+                send_old_ads_tg(call.message, all_params)
+                send_old_ads(call.message, all_params)
+            except:
+                print(traceback.format_exc())
+                keyboard = types.InlineKeyboardMarkup()
+                button_bar = types.InlineKeyboardButton('Я подписался', callback_data='sub check')
+                keyboard.add(button_bar)
+                bot.send_message(chat_id=call.message.chat.id, text="Чтобы получить результаты поиска подпишитесь на канал @FlatoonChat", reply_markup=keyboard)
+            
         if "i am" in call.data:
             all_params = load_parameters()
             params = all_params[str(call.message.chat.id)]
+            
             #params = get_chat_parameters(call.message.chat.id)
             if "no" in call.data:
                 params['answered'] = 0
@@ -925,6 +944,7 @@ def main():
 
     @bot.message_handler(commands=['start'])
     def start(message):
+       # import pdb; pdb.set_trace()
         params = load_parameters()
         try:
             if params[str(message.chat.id)] == "konchita":
@@ -950,8 +970,9 @@ def main():
 
     def cont(message, data_):
         user_id = message.from_user.id
-      #  import pdb; pdb.set_trace()
+       # import pdb; pdb.set_trace()
         bot.send_message(message.chat.id, "Бот печатает ...")
+        save_action(chat_id=message.chat.id, action_name=user_data[user_id])
         if len(user_data[user_id] ['messages'])>1:
             user_data[user_id] ['messages'].append({"role":"user", "content":"{}".format(message.text)})
         response = dialogue(user_data[user_id])
@@ -961,46 +982,55 @@ def main():
             # Сохранение параметров для текущего чата
             all_params[str(message.chat.id)] = "konchita"
             save_parameters(all_params)
-        
+            save_action(chat_id=message.chat.id, action_name=user_data[user_id])
         if "beseda finita" in response:
             save_action(chat_id=message.chat.id, action_name=user_data[user_id])
-            response, json_string = response.split("beseda finita")
+            response, user_data[str(user_id) + "resp"] = response.split("beseda finita")
             try:
-                params = json.loads(json_string)
+                params = json.loads(user_data[str(user_id) + "resp"])
                 all_params = load_parameters()
                 all_params[str(message.chat.id)] = params
                 params['username'] = message.from_user.username
                 params['chat_id'] = message.chat.id
                 params['metro_dist'] = 1000
                 save_parameters(all_params)
+                keyboard = types.InlineKeyboardMarkup()
+                button_bar = types.InlineKeyboardButton('Я подписался', callback_data='sub check')
+                keyboard.add(button_bar)
+                bot.send_message(chat_id=message.chat.id, text="Чтобы получить результаты поиска подпишитесь на канал @FlatoonChat", reply_markup=keyboard)
+                
                 send_old_ads_tg(message, all_params)
                 send_old_ads(message, all_params) 
                 activate_test_subscription(message)
                 return
             except:
                 
-               # import pdb; pdb.set_trace()
+              #  import pdb; pdb.set_trace()
                 while True:
+                    print(123)
                     try:
                         user_data[user_id]  = {
             'model': 'gpt-4o-mini', 
-            'messages': [ {'role': 'user', 'content': "{} преобразуй этот json в корректный json, чтобы можно было преобразовать его с помощью json.loads() в python верни мне чистый json без всяких символов потому что я возьму твой response и засуну в json.loads() вот так json.loads(response) ".format(json_string)}
+            'messages': [ {'role': 'user', 'content': "{} преобразуй этот json в корректный json, чтобы можно было преобразовать его с помощью json.loads() в python верни мне чистый json без всяких символов потому что я возьму твой response и засуну в json.loads() вот так json.loads(response) так что сделай без всяких лишних символов чистый json !!  ".format(user_data[str(user_id) + "resp"])}
             ]}
-                        json_string = dialogue(user_data[user_id] )
-                        params = json.loads(json_string)
-                        user_data[user_id] = params
+                       
+                        user_data[user_id]  = json.loads(dialogue(user_data[user_id] ))
+                
                         break
                     except:
-                        pass
+                        print(traceback.format_exc())
                 user_data[user_id]['username'] = message.from_user.username
                 user_data[user_id]['chat_id'] = message.chat.id
                 user_data[user_id]['metro_dist'] = 1000
                 #if user_data[user_id]['sex'] == 
                 all_params = load_parameters()
-                all_params[str(message.chat.id)] = params
+                all_params[str(message.chat.id)] = user_data[user_id]
                 save_parameters(all_params)
-                send_old_ads_tg(message, all_params)
-                send_old_ads(message, all_params) 
+                keyboard = types.InlineKeyboardMarkup()
+                button_bar = types.InlineKeyboardButton('Я подписался', callback_data='sub check')
+                keyboard.add(button_bar)
+                bot.send_message(chat_id=message.chat.id, text="Чтобы получить результаты поиска подпишитесь на канал @FlatoonChat", reply_markup=keyboard)
+                 
                 activate_test_subscription(message)
                 return
         user_data[user_id]['messages'].append({"role": "assistant", "content":"{}".format(response)})
