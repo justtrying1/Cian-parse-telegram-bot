@@ -268,9 +268,9 @@ def save_cache(appeared):
                   
                     
                     time_ = datetime.strptime(ad['time'], '%Y-%m-%d %H-%M-%S')
-                    #button_bar = types.InlineKeyboardButton('Показать описание', callback_data='{}'.format(ad['url']))
-                    #keyboard = types.InlineKeyboardMarkup()
-                  #  keyboard.add(button_bar)
+                    button_bar = types.InlineKeyboardButton('Показать описание', callback_data='{}'.format(ad['url']))
+                    keyboard = types.InlineKeyboardMarkup()
+                    keyboard.add(button_bar)
                     msg = f"""\nАктуально на {time_}\n
 {ad['title']}
 🚇метро: {ad['underground']} {ad['metro_dist']}
