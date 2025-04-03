@@ -71,7 +71,7 @@ def hello_rieltor(cian_link="", chat_id = 123):
         WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, "//span[.='Написать']"))).click()   # кнопка "написать" на странице объявления
         counter = counter+1
     except:
-        driver.close()
+        driver.quit()
         return False
         
 
@@ -104,7 +104,7 @@ def hello_rieltor(cian_link="", chat_id = 123):
                 # import pdb; pdb.set_trace()
                     ActionChains(driver).send_keys(Keys.TAB).perform()
                     ActionChains(driver).send_keys(Keys.ENTER).perform()
-                    driver.close()
+                    driver.quit()
                     return True
                     break
                 break_flag = True
@@ -114,7 +114,7 @@ def hello_rieltor(cian_link="", chat_id = 123):
             print(f"Class Name: {class_name}")
             print(f"ID: {element_id}")
             print(f"Inner Text: {inner_text}")
-            driver.close()
+            
            
 def auau():
     chat_id = "cookies"
@@ -334,7 +334,7 @@ def chat_list_monitoring(chat_id):
 
    
 if __name__ == "__main__":
-    chat_list_monitoring()
+    chat_list_monitoring(7494874190)
 
 #data['amount_after'] = get_chats_amount()
 

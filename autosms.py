@@ -135,7 +135,7 @@ def register_cian(chat_id=123):
 
 # Загрузка куки из файла
 def load_cookie():
-    with open('cookies.pkl', 'rb') as file:
+    with open('7494874190.pkl', 'rb') as file:
         cookies = pickle.load(file)
     for cookie in cookies:
         driver.add_cookie(cookie)

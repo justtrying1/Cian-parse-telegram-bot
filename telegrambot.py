@@ -311,7 +311,7 @@ def save_cache(appeared):
                        
                     
                     if chat_id == 7494874190:
-                        import pdb; pdb.set_trace()
+                       # import pdb; pdb.set_trace()
                         from cian_chat import load_dialogues
                         from cian_chat import hello_rieltor
                         from autosms import register_cian
