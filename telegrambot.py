@@ -12,11 +12,14 @@ from datetime import timedelta
 from datetime import datetime
 from copy import deepcopy
 from telebot import types
+
 import traceback
 
 #API_TOKEN = 'YOUR_API_TOKEN'  # Замените на ваш токен
+from multiprocessing import Process
 bot = telebot.TeleBot(API_TOKEN)
-
+SNIMATEL_API = "7848749485:AAGSP-D5jD0d0JflbZCTXhMe3mKt6DP8NC0"
+snimatel_robot = telebot.TeleBot(SNIMATEL_API)
 TINY_DB = {}
 # Путь к локальному JSON-файлу
 #JSON_FILE_PATH = 'ads.json'  # Укажите путь к вашему локальному JSON-файлу
@@ -35,7 +38,12 @@ def load_action():
     except:
         return {}
     
-
+@snimatel_robot.message_handler(commands=['start'])
+def snimatel_start(message):
+    print(message.from_user.id)
+    print(message.chat.id)
+    snimatel_robot.send_message(message.chat.id, "В этом боте будет выполняться вся коммуникация в рамках поиска вашего будущего жилья🥳 \n Мы будем уточнять время, удобное вам для просмотра и т.д.")
+        
 @bot.message_handler(commands=['buy'])
 def buy(message):
     if message.from_user.id == 7494874190:
@@ -234,7 +242,7 @@ def save_cache_tg(appeared):
            # save_action("sent", sent_list)
         
 def save_cache(appeared):
-  
+    
     all_params = load_parameters()
     sent_list = {}
    # cache = load_cache()
@@ -267,6 +275,7 @@ def save_cache(appeared):
                 for ad in new_filtered_ads:
                   
                     
+
                     time_ = datetime.strptime(ad['time'], '%Y-%m-%d %H-%M-%S')
                     button_bar = types.InlineKeyboardButton('Показать описание', callback_data='{}'.format(ad['url']))
                     keyboard = types.InlineKeyboardMarkup()
@@ -278,7 +287,8 @@ def save_cache(appeared):
 💸цена: {ad['price_per_month']}₽
 🏘район: {ad['district']}
 🔗источник: {"https://flatoon.pythonanywhere.com/?url="+ad['url'].split("https://")[1]}\n
-"""
+"""                 
+                        
                     if 'addon' in ad:
                         parsed_addon = parse_addon(ad['addon'], params=all_params.get(i), good_description=ad['good_description'])
                         msg = parsed_addon + msg    
@@ -300,11 +310,26 @@ def save_cache(appeared):
                 
                        
                     
-                    elif chat_id == 7494874190:
+                    if chat_id == 7494874190:
+                        import pdb; pdb.set_trace()
+                        from cian_chat import load_dialogues
+                        from cian_chat import hello_rieltor
+                        from autosms import register_cian
+                        dialogues = load_dialogues()
                         if 'good_description' not in ad:
                             ad['good_description'] = " "
                         bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n")
-            
+                        import os.path
+                        if not os.path.isfile("{}.pkl".format(chat_id)):
+                            register_cian(chat_id=chat_id)
+                            
+                        good_bye = hello_rieltor(cian_link=ad['url'], chat_id=chat_id)
+                        
+                        if good_bye:
+                            snimatel_robot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n\nНачали договариваться о просмотре этой квартиры")
+                        else:
+                            print("something went wrong")
+
                 
                 if parsed_count > 0: 
                     button_bar = types.InlineKeyboardButton('Да', callback_data="i am here")
@@ -725,6 +750,13 @@ def test_message(txt):
             pass
 
 def main():
+    @snimatel_robot.callback_query_handler(func=lambda call: True)
+    def cococo(call):
+        from cian_chat import answer_vstrecha
+        if "vstrecha" in call.data:
+            flat_id = int(call.data.split(" ")[1])
+            snimatel_robot.register_next_step_handler(call.message, lambda msg: answer_vstrecha(chat_id=call.message.chat.id, flat_id = flat_id, message=call.message.text))
+            
     @bot.callback_query_handler(func=lambda call: True)
     def callback_query(call):
       #  import pdb; pdb.set_trace()
@@ -1185,6 +1217,7 @@ def main():
             
             check_undergrounds(message)
                                
+    
         
     def get_author_type(message, skip = False, author = False):
         global TINY_DB
@@ -1209,7 +1242,6 @@ def main():
         button_bar = types.InlineKeyboardButton('Пропустить', callback_data='author continue')
         keyboard.add(button_bar)
         bot.send_message(message.chat.id, "Хотите ли получать предложения только от собственников?\n", reply_markup=keyboard)
-
 
 
     def get_metro_dist(message, skip = False):
@@ -1259,18 +1291,28 @@ def main():
         activate_test_subscription(message)
 
         
-        
-    bot.polling(none_stop=True)
-               
-    #import threading
-    #threading.Thread(target=watch_json_file, daemon=True).start()
-def send_greeting_ads():
-    pass
-    # Запуск бота
+def start_bot1():
+    snimatel_robot.polling(none_stop=True, interval=0, timeout=60)
+
+def start_bot2():
+    bot.polling(none_stop=True, interval=0, timeout=60)
+
 if __name__ == '__main__':
     while True:
         try:
-            main()
+            bot_thread1 = Process(target=start_bot1, args=())
+            bot_thread2 = Process(target=start_bot2, args=())
+            main_thread = Process(target=main, args=())
+            
+            bot_thread1.start()
+            bot_thread2.start()
+            main_thread.start()
+
+            bot_thread1.join()
+            bot_thread2.join()
+            main_thread.join()
         except Exception as e:
             print(e)
+    # Запуск бота
+        
         
