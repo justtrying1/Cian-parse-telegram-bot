@@ -328,7 +328,7 @@ def save_cache(appeared):
                         if good_bye:
                             snimatel_robot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n\nНачали договариваться о просмотре этой квартиры")
                         else:
-                            print("something went wrong")
+                            print("no knopki probably =))")
 
                 
                 if parsed_count > 0: 

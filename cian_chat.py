@@ -48,7 +48,7 @@ def load_old():
             pass
 
 
-fp = webdriver.FirefoxProfile(r'kdvnh6gc.default-release')
+#fp = webdriver.FirefoxProfile(r'kdvnh6gc.default-release')
 
 def load_cookie(driver, chat_id):
     with open('{}.pkl'.format(chat_id), 'rb') as file:
@@ -285,6 +285,8 @@ def chat_list_monitoring(chat_id):
                         print(traceback.format_exc())
                 user_data[chat_id][flat_id] ['messages'].append({"role":"user", "content":"{}".format(message)})
                 response = dialogue(user_data[chat_id][flat_id])
+                if "robot vs robot" in response:
+                    continue
                 if "vstrecha" in response:
                     button = types.InlineKeyboardButton('Ответить', callback_data="vstrecha {}".format(flat_id))
                     
