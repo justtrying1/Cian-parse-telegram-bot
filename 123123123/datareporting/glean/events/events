@@ -1,0 +1,17 @@
+{"timestamp":0,"category":"session_restore","name":"backup_can_be_loaded_session_file","extra":{"glean_timestamp":"1741697877843","path_key":"clean","loadfail_reason":"N/A","can_load":"true"}}
+{"timestamp":0,"category":"session_restore","name":"backup_can_be_loaded_session_file","extra":{"can_load":"true","path_key":"clean","loadfail_reason":"N/A","glean_timestamp":"1741697877843"}}
+{"timestamp":0,"category":"session_restore","name":"shutdown_success_session_startup","extra":{"glean_timestamp":"1741697877843","shutdown_ok":"false","shutdown_reason":"N/A"}}
+{"timestamp":223,"category":"webcompatreporting","name":"reason_dropdown","extra":{"setting":"required","glean_timestamp":"1741697878066"}}
+{"timestamp":332,"category":"jsonfile","name":"load_autofillprofiles","extra":{"value":"","glean_timestamp":"1741697878176"}}
+{"timestamp":464,"category":"doh","name":"state_enabled","extra":{"glean_timestamp":"1741697878308","value":"null"}}
+{"timestamp":464,"category":"doh","name":"evaluate_v2_heuristics","extra":{"canaries":"","enterprise":"","platform":"","steeredProvider":"","networkID":"3zVGZLCUMqmZngA5KyRHw/ISDdlq4IFuwdhZW7ckT30=","evaluateReason":"startup","captiveState":"not_captive","glean_timestamp":"1741697878308","value":"enable_doh","filtering":""}}
+{"timestamp":535,"category":"network.dns","name":"trr_confirmation_context","extra":{"time":"121.232300","value":"2","attemptCount":"1","networkID":"NE9JRYQN4OmNrOI4a16mB1KWHlc=","contextReason":"pref-change","results":"+","glean_timestamp":"1741697878378","trigger":"pref-change","captivePortal":"1"}}
+{"timestamp":604,"category":"normandy","name":"validation_failed_nimbus_experiment","extra":{"value":"add-an-image-to-pdf-with-alt-text-rollout","feature":"addAnImageInPDF","reason":"invalid-feature","glean_timestamp":"1741697878447"}}
+{"timestamp":604,"category":"nimbus_events","name":"validation_failed","extra":{"experiment":"add-an-image-to-pdf-with-alt-text-rollout","glean_timestamp":"1741697878447","reason":"invalid-feature","feature":"addAnImageInPDF"}}
+{"timestamp":604,"category":"nimbus_events","name":"is_ready","extra":{"glean_timestamp":"1741697878448"}}
+{"timestamp":635,"category":"jsonfile","name":"load_logins","extra":{"glean_timestamp":"1741697878479","value":""}}
+{"timestamp":647,"category":"upgrade_dialog","name":"trigger_reason","extra":{"glean_timestamp":"1741697878490","value":"not-major"}}
+{"timestamp":17950,"category":"devtools.main","name":"open_tools","extra":{"width":"1300","glean_timestamp":"1741697895794","shortcut":"","host":"bottom","first_panel":"inspector","entrypoint":"ContextMenu","splitconsole":"false","session_id":"-1"}}
+{"timestamp":17950,"category":"devtools.main","name":"enter_inspector","extra":{"session_id":"-1","cold":"true","glean_timestamp":"1741697895794","host":"bottom","start_state":"initial_panel","width":"1300","panel_name":"inspector"}}
+{"timestamp":3142876,"category":"network.dns","name":"trr_confirmation_context","extra":{"captivePortal":"1","trigger":"retry-trr","networkID":"NE9JRYQN4OmNrOI4a16mB1KWHlc=","time":"62.934200","results":"+","value":"2","attemptCount":"1","contextReason":"success","glean_timestamp":"1741701020719"}}
+{"timestamp":12524870,"category":"network.dns","name":"trr_confirmation_context","extra":{"attemptCount":"1","networkID":"NE9JRYQN4OmNrOI4a16mB1KWHlc=","results":"+","time":"2901.699100","value":"2","contextReason":"success","trigger":"retry-trr","glean_timestamp":"1741710402714","captivePortal":"1"}}

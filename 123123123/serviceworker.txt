@@ -1,0 +1,13 @@
+9
+^partitionKey=%28https%2Ccian.ru%29
+https://www.googletagmanager.com/static/service_worker
+https://www.googletagmanager.com/static/service_worker/5230/sw.js?origin=https%3A%2F%2Fwww.cian.ru
+false
+{e6c829db-ecd2-41c0-9094-2b64fd867339}
+1
+1741693015081122
+1741693015081770
+1741693015026801
+0
+true
+#
