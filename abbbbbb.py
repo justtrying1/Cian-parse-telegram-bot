@@ -114,7 +114,7 @@ def load_old():
             with open(OLD_JSON, 'r', encoding='utf-8') as file:
                 return json.load(file)
         except:
-            pass
+            print("old except")
 def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, room3=0, no_room = False, preload = False):
     url_list=[]
     time.sleep(3.5)
@@ -340,7 +340,7 @@ import gc
 tracemalloc.start()
 while True:
     then = datetime.now()
-    parse(2,10,room1=0,room2=0, no_room=True)    
+   # parse(2,10,room1=0,room2=0, no_room=True)    
    # parse(2,10,room1=1,room2=1, no_room=False)    
     parse(5,25,room1=1,room2=1, room3=1)
     print(datetime.now() - then )
