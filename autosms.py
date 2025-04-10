@@ -25,6 +25,7 @@ from telegrambot import save_cache
 import tracemalloc
 import selenium
 from selenium import webdriver
+from telegrambot import bot
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from bs4 import BeautifulSoup
@@ -64,6 +65,7 @@ import traceback
 #import pdb; pdb.set_trace()
 
 def register_cian(chat_id=123):
+    bot.send_message(int(chat_id), "Регистрируем новый Циан аккаунт...")
     try:
         driver.get("http://www.cian.ru")
         time.sleep(3)
@@ -96,6 +98,7 @@ def register_cian(chat_id=123):
         except:
             driver.find_element(By.XPATH, '//span[contains(text(), "Создать аккаунт")]').click()
         #WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, '//span[contains(text(), "Создать аккаунт")]').click() ))
+        counter = 0
         while True:
             response = requests.get(f'https://sms-activate.ru/stubs/handler_api.php?api_key={API_KEY}&action=getStatus&id={activation_id}')
             if response.status_code == 200:
@@ -106,7 +109,11 @@ def register_cian(chat_id=123):
                     break
                 else:
                     print("Ошибка получения статуса:", data)
-                    time.sleep(10)
+                    time.sleep(15)
+                    counter = counter + 1
+                    if counter > 10:
+                        register_cian(chat_id=chat_id)
+                        return
             else:
                 print("Ошибка запроса:", response.status_code)
                 time.sleep(10)

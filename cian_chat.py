@@ -14,8 +14,7 @@ import time
 import json
 from datetime import datetime
 import telebot
-SNIMATEL_API = "7848749485:AAGSP-D5jD0d0JflbZCTXhMe3mKt6DP8NC0"
-snimatel_robot = telebot.TeleBot(SNIMATEL_API)
+from telegrambot import bot
 import os
 import sys
 import cianparser
@@ -37,6 +36,23 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.actions.action_builder import ActionBuilder
+from deepseek import data_, cian, dialogue
+
+DIALOGUES_FILE = "dialogues.json"
+def load_dialogues():
+    if os.path.exists(DIALOGUES_FILE):
+        with open(DIALOGUES_FILE, 'r', encoding='utf-8') as file:
+            return json.load(file)
+    return {}
+
+def save_dialogues(params):
+    with open(DIALOGUES_FILE, 'w', encoding='utf-8') as file:
+        json.dump(params, file, ensure_ascii=False)
+
+
+user_data = load_dialogues()
+data_['messages'].append({"role": "assistant", "content":"{}".format("Здравствуйте. Уточните, пожалуйста, ещё сдаёте?")})
+
 OLD_JSON = r"&rent&30000&40000&1 room&Москва&2024-09-30 22-40-46.json"
 def load_old():
     while True:
@@ -57,20 +73,28 @@ def load_cookie(driver, chat_id):
         driver.add_cookie(cookie)
 
 def hello_rieltor(cian_link="", chat_id = 123):
+    #import pdb; pdb.set_trace()
+    
+    global user_data
+    chat_id = str(chat_id)
+    flat_id = cian_link.split("/")[-2]
+ 
+    from autosms import register_cian
+    import os.path
+    if not os.path.isfile("{}.pkl".format(chat_id)):
+        register_cian(chat_id=chat_id)
+    
     driver = webdriver.Firefox()
+    driver.set_window_size(1920, 1080)
     driver.get("https://cian.ru")
     load_cookie(driver, chat_id)
     driver.get(cian_link)
-    counter = 0
-
-            #time.sleep(10)
-    if counter  > 150:
-            return
-    
     try:
         WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, "//span[.='Написать']"))).click()   # кнопка "написать" на странице объявления
-        counter = counter+1
+        
     except:
+        print(traceback.format_exc())
+        bot.send_message(int(chat_id), "Не удалось написать автору объявления.. Либо объявления не существует, либо автор принимает только звонки")
         driver.quit()
         return False
         
@@ -97,14 +121,17 @@ def hello_rieltor(cian_link="", chat_id = 123):
                     try:
                         element.find_elements(By.XPATH, '//span[@data-name="HintQuestion"]')[1].click()
                     except:
-                            pass
+                        print(traceback.format_exc())
                             #import pdb; pdb.set_trace()
                 
                 if break_flag:
                 # import pdb; pdb.set_trace()
                     ActionChains(driver).send_keys(Keys.TAB).perform()
                     ActionChains(driver).send_keys(Keys.ENTER).perform()
+                    user_data[chat_id][flat_id] = data_.copy()
+                    save_dialogues(user_data)
                     driver.quit()
+                    
                     return True
                     break
                 break_flag = True
@@ -119,6 +146,7 @@ def hello_rieltor(cian_link="", chat_id = 123):
 def auau():
     chat_id = "cookies"
     driver = webdriver.Firefox()
+    driver.set_window_size(1920, 1080)
     load_cookie(driver, chat_id)
     old = load_old()
     for i in old:
@@ -181,29 +209,23 @@ def auau():
    
 
 
-DIALOGUES_FILE = "dialogues.json"
-def load_dialogues():
-    if os.path.exists(DIALOGUES_FILE):
-        with open(DIALOGUES_FILE, 'r', encoding='utf-8') as file:
-            return json.load(file)
-    return {}
 
-def save_dialogues(params):
-    with open(DIALOGUES_FILE, 'w', encoding='utf-8') as file:
-        json.dump(params, file, ensure_ascii=False)
 
-from deepseek import data_, cian, dialogue
-user_data = load_dialogues()
-data_['messages'].append({"role": "assistant", "content":"{}".format("Здравствуйте. Уточните, пожалуйста, ещё сдаёте?")})
 import traceback
 # Получение информации о текущем элементе с фокусом
-def answer_vstrecha(chat_id, flat_id, message):
+def answer_vstrecha(chat_id: int, flat_id: int, message):
+    message = "Клиент пишет: \n{message}"
+    chat_id = str(chat_id)
+    flat_id = str(flat_id)
     global user_data
     driver = webdriver.Firefox()
+
+    driver.set_window_size(1920, 1080)
+    driver.get("https://www.cian.ru")
     load_cookie(driver, chat_id)
     driver.get("https://www.cian.ru")
     baba = driver.find_element(By.XPATH, "/html/body/header/div/div/div[1]/div/div[2]/div/a[2]").click() 
-
+    #import pdb; pdb.set_trace()
     while True:
         try:
             driver.switch_to.window(driver.window_handles[1])
@@ -214,29 +236,28 @@ def answer_vstrecha(chat_id, flat_id, message):
   #  import pdb; pdb.set_trace()
     time.sleep(3)
     print(len(driver.find_element(By.XPATH, "/html/body/div[1]/div/div[1]/div[2]").find_elements(By.XPATH, '//div[@data-name="ChatListItem"]')))
-
     while True:
-       # import pdb; pdb.set_trace()
         flag = False
         for i in driver.find_elements(By.XPATH, '//div[@data-name="ChatListItem"]'):
             if i.text.split('\n')[0] == "Циан":
                 continue
             print(i.get_attribute('data-chatid'))
             try:
-                if int(i.get_attribute('data-chatid').split("_")[-1]) == flat_id:
+                if i.get_attribute('data-chatid').split("_")[-1] == flat_id:
                     
                     i.click()
-                    user_data[chat_id][flat_id] ['messages'].append({"role":"assistant", "content":"{}".format(message)})
+                    user_data[chat_id][flat_id] ['messages'] = user_data[chat_id][flat_id] ['messages'] + [({"role":"assistant", "content":"{}".format(message)})]
                     driver.find_element(By.XPATH, "/html/body/div[1]/div/div[2]/div[1]/div[4]/div[2]/div/textarea[1]").send_keys(message) 
                     driver.find_element(By.XPATH, "/html/body/div[1]/div/div[2]/div[1]/div[4]/div[2]/div/button[2]").click()
+                    break
             except:
-                pass
+                print(traceback.format_exc())
 
 def chat_list_monitoring(chat_id):
-    
-    
+    chat_id = str(chat_id)
     global user_data
     driver = webdriver.Firefox()
+    driver.set_window_size(1920, 1080)
     driver.get("https://cian.ru")
     load_cookie(driver, chat_id)
     driver.get("https://www.cian.ru")
@@ -249,68 +270,66 @@ def chat_list_monitoring(chat_id):
         except:
             pass
     WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div/div[1]/div[2]")))
-  #  import pdb; pdb.set_trace()
     time.sleep(3)
     print(len(driver.find_element(By.XPATH, "/html/body/div[1]/div/div[1]/div[2]").find_elements(By.XPATH, '//div[@data-name="ChatListItem"]')))
-
+    #import pdb; pdb.set_trace()
     while True:
-       # import pdb; pdb.set_trace()
         flag = False
         for i in driver.find_elements(By.XPATH, '//div[@data-name="ChatListItem"]'):
             if i.text.split('\n')[0] == "Циан":
                 continue
             print(i.get_attribute('data-chatid'))
             try:
-                flat_id = int(i.get_attribute('data-chatid').split("_")[-1])
-                
+                flat_id = i.get_attribute('data-chatid').split("_")[-1]
                 if chat_id not in user_data:
                     user_data[chat_id] = {}
                 if flat_id not in user_data[chat_id]:
-                    user_data[chat_id][flat_id] = data_
+                    user_data[chat_id][flat_id] = data_.copy()
                 elif user_data[chat_id][flat_id]['status'] == "negated":
                     continue
             except:
-                pass
+                print(traceback.format_exc())
             try:
                 number_of_messages = int(i.text.split("\n")[-1])
-              
+                #import pdb; pdb.set_trace()
                 message = ""
                 i.click()
                 while True:
                     try:
                         for msg in driver.find_elements(By.XPATH, '//div[@data-name="ChatMessageLayout"]')[-number_of_messages:]:
-                            message =  "{0} \n".format(message).join(msg.text.split('\n')[:-1])
+                            message = message + "\n".join(msg.text.split('\n')[:-1]) + "\n"
                         break
                     except:
                         print(traceback.format_exc())
-                user_data[chat_id][flat_id] ['messages'].append({"role":"user", "content":"{}".format(message)})
+                if user_data[chat_id][flat_id] ['messages'][-1]['role'] == "assistant":
+                    user_data[chat_id][flat_id] ['messages'] = user_data[chat_id][flat_id] ['messages'] + [({"role":"user", "content":"{}".format(message)})]
                 response = dialogue(user_data[chat_id][flat_id])
                 if "robot vs robot" in response:
                     continue
                 if "vstrecha" in response:
                     button = types.InlineKeyboardButton('Ответить', callback_data="vstrecha {}".format(flat_id))
-                    
                     keyboard = types.InlineKeyboardMarkup()
                     keyboard.add(button)
-                    snimatel_robot.send_message(chat_id, "Автор объявления {0} прислал следующее сообщение: {1} \n Когда бы вам было удобно назначить встречу?".format("https://www.cian.ru/rent/flat/{}/".format(flat_id), message), reply_markup=keyboard)
-                    
+                    bot.send_message(chat_id, "Автор объявления {0} хочет назначить встречу\n\nКогда бы вам было удобно?".format("https://www.cian.ru/rent/flat/{}/".format(flat_id), message), reply_markup=keyboard)
+                    continue
                 driver.find_element(By.XPATH, "/html/body/div[1]/div/div[2]/div[1]/div[4]/div[2]/div/textarea[1]").send_keys(response) 
                 
                 time.sleep(2)
-                user_data[chat_id][flat_id] ['messages'].append({"role":"assistant", "content":"{}".format(response)})
+                if user_data[chat_id][flat_id] ['messages'][-1]['role'] == "user":
+                    user_data[chat_id][flat_id] ['messages'] = user_data[chat_id][flat_id] ['messages'] + [({"role":"assistant", "content":"{}".format(response)})]
+
                 driver.find_element(By.XPATH, "/html/body/div[1]/div/div[2]/div[1]/div[4]/div[2]/div/button[2]").click()
                 time.sleep(2)
                 flag = True
-
                 break
             except:
+                print(traceback.format_exc())
                 continue
-
-
         driver.refresh() 
+        time.sleep(2)
         save_dialogues(user_data)
         if not flag:
-            time.sleep(300)
+            time.sleep(120)
 
 # driver.find_element(By.XPATH, '//div[@data-name="ChatListItem"]').get_attribute('data-chatid') 
 # driver.find_element(By.XPATH, '//div[@data-name="ChatListItem"]').text.split("\n")[-1] 

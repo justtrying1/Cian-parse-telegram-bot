@@ -196,7 +196,7 @@ def save_cache_tg(appeared):
                 parsed_count = 0
                 for ad in appeared:
                        
-                    msg = f"источник: {"https://flatoon.pythonanywhere.com/?url="+ad['link'].split("https://")[1]}\n"
+                    msg = f"источник: {0} \n".format("https://flatoon.pythonanywhere.com/?url="+ad['link'].split("https://")[1])
                     if 'addon' in ad:
                         parsed_addon = parse_addon(ad['addon'], params=all_params.get(i), good_description=ad['good_description'], telegram=True)
                         msg = parsed_addon + msg   
@@ -217,7 +217,6 @@ def save_cache_tg(appeared):
                     elif chat_id == 7494874190:
                         bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n" + "\ncheck")
             
-                
                 if parsed_count > 0: 
                     button_bar = types.InlineKeyboardButton('Да', callback_data="i am here")
                     button_bar2 = types.InlineKeyboardButton('Нет', callback_data="i am no")
@@ -319,6 +318,7 @@ def save_cache(appeared):
                         if 'good_description' not in ad:
                             ad['good_description'] = " "
                         bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n")
+                        from autosms import register_cian
                         import os.path
                         if not os.path.isfile("{}.pkl".format(chat_id)):
                             register_cian(chat_id=chat_id)
@@ -326,7 +326,10 @@ def save_cache(appeared):
                         good_bye = hello_rieltor(cian_link=ad['url'], chat_id=chat_id)
                         
                         if good_bye:
-                            snimatel_robot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n\nНачали договариваться о просмотре этой квартиры")
+                            button_bar = types.InlineKeyboardButton('Эта квартира мне не подходит', callback_data="negated {}".format(ad['url'].split("/")[-2]))
+                            keyboard = types.InlineKeyboardMarkup()
+                            keyboard.add(button_bar)
+                            bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n\nНачали договариваться о просмотре этой квартиры", reply_markup=keyboard)    
                         else:
                             print("no knopki probably =))")
 
@@ -461,9 +464,12 @@ def send_old_ads(message, params,dont_flag = 0, flag = False):
                         #  import pdb; pdb.set_trace()
             else:
                 parsed_addon = " "
-            
+            flat_id = ad['url'].split("/")[-2]
             if parsed_addon != " " or (ad['rooms_count'] > 0):
-                bot.send_message(message.chat.id, msg)
+                button_bar2 = types.InlineKeyboardButton('Договориться о просмотре этой квартиры', callback_data="hello {}".format(flat_id))
+                keyboard = types.InlineKeyboardMarkup()
+                keyboard.add(button_bar2)
+                bot.send_message(message.chat.id, msg, reply_markup=keyboard)
                 count = count + 1 
                 do_flag = True
             if count > 3 or (datetime.strptime(ad['time'], '%Y-%m-%d  %H-%M-%S') - datetime.now()).days > 10:
@@ -749,18 +755,16 @@ def test_message(txt):
         except:
             pass
 
+
 def main():
-    @snimatel_robot.callback_query_handler(func=lambda call: True)
-    def cococo(call):
-        from cian_chat import answer_vstrecha
-        if "vstrecha" in call.data:
-            flat_id = int(call.data.split(" ")[1])
-            snimatel_robot.register_next_step_handler(call.message, lambda msg: answer_vstrecha(chat_id=call.message.chat.id, flat_id = flat_id, message=call.message.text))
-            
+   
+
     @bot.callback_query_handler(func=lambda call: True)
     def callback_query(call):
       #  import pdb; pdb.set_trace()
         global TINY_DB
+       
+            
         if "sub" in call.data:
             all_params = load_parameters()
            # import pdb; pdb.set_trace()
@@ -976,13 +980,13 @@ def main():
 
     @bot.message_handler(commands=['start'])
     def start(message):
-       # import pdb; pdb.set_trace()
+        
         params = load_parameters()
         try:
             if params[str(message.chat.id)] == "konchita":
                 return
-            if message.chat.id == 781665670:
-                raise Exception
+            
+            raise Exception
         except:
                 
             bot.send_message(message.chat.id, "Бот просыпается ...")
@@ -1291,26 +1295,192 @@ def main():
         activate_test_subscription(message)
 
         
-def start_bot1():
-    snimatel_robot.polling(none_stop=True, interval=0, timeout=60)
+
+
 
 def start_bot2():
+    @bot.callback_query_handler(func=lambda call: True)
+    def callback_query(call):
+    #  import pdb; pdb.set_trace()
+        global TINY_DB
+        from cian_chat import answer_vstrecha
+        from cian_chat import load_dialogues
+        from cian_chat import save_dialogues
+        from cian_chat import hello_rieltor
+        chat_id = str(call.message.chat.id)
+        if "vstrecha" in call.data:
+            flat_id = call.data.split(" ")[1]
+            bot.send_message(call.message.chat.id, "Теперь напишите свой ответ")
+            bot.register_next_step_handler(call.message, lambda msg: answer_vstrecha(chat_id=call.message.chat.id, flat_id = flat_id, message=call.message.text))
+        if "negated" in call.data:
+            
+            flat_id = call.data.split(" ")[1]
+            user_data = load_dialogues()
+            user_data[chat_id][flat_id]['status'] == "negated"
+            save_dialogues(user_data)
+            bot.send_message(call.message.chat.id, "Хорошо, эта квартира больше не рассматривается")
+        if "hello" in call.data:
+            flat_id = call.data.split(" ")[1]
+            
+            bot.send_message(call.message.chat.id, "Пишем автору объявления...")
+            
+            good_bye = hello_rieltor("https://cian.ru/rent/flat/{}".format(flat_id), chat_id=call.message.chat.id)
+            
+            if good_bye:
+                button_bar = types.InlineKeyboardButton('Эта квартира мне не подходит', callback_data="negated {}".format(flat_id))
+                keyboard = types.InlineKeyboardMarkup()
+                keyboard.add(button_bar)
+                bot.send_message(chat_id, "https://cian.ru/rent/flat/{}".format(flat_id) + "\n\nНачали договариваться о просмотре этой квартиры", reply_markup=keyboard)    
+            
+        if "sub" in call.data:
+            all_params = load_parameters()
+        # import pdb; pdb.set_trace()
+            try:
+                bot.get_chat_member(chat_id=-1002495178490, user_id=call.message.from_user.id)
+                send_old_ads_tg(call.message, all_params)
+                send_old_ads(call.message, all_params)
+            except:
+                print(traceback.format_exc())
+                keyboard = types.InlineKeyboardMarkup()
+                button_bar = types.InlineKeyboardButton('Я подписался', callback_data='sub check')
+                keyboard.add(button_bar)
+                bot.send_message(chat_id=call.message.chat.id, text="Чтобы получить результаты поиска подпишитесь на канал @FlatoonChat", reply_markup=keyboard)
+            
+        if "i am" in call.data:
+            all_params = load_parameters()
+            params = all_params[str(call.message.chat.id)]
+            
+            #params = get_chat_parameters(call.message.chat.id)
+            if "no" in call.data:
+                params['answered'] = 0
+                bot.send_message(call.message.chat.id, "Спасибо за отзыв. Пожалуйста, напишите о проблемах в работе боат в личные сообщения @milkicow, это поможет боту дальше развиваться")
+            else:
+                params['answered'] = 1
+                bot.send_message(call.message.chat.id, "Спасибо за отзыв. Я очень рад, что сервис вам нравится, о любых недочётах можете написать в личные сообщения @milkicow, тогда вы поможете боту развиваться и дальше.")
+            
+            all_params[str(call.message.chat.id)] = params
+            save_parameters(params=all_params)
+        
+            print("here" + str(call.message.chat.id))
+        
+        print(call.data)
+        
+            
+        # button_foo = types.InlineKeyboardButton('Показать новые', callback_data='new')
+
+    user_data = {}
+    from ai import dialogue, a 
+
+    @bot.message_handler(commands=['start'])
+    def start(message):
+        
+        params = load_parameters()
+        try:
+            if params[str(message.chat.id)] == "konchita":
+                return
+            
+            raise Exception
+        except:
+                
+            bot.send_message(message.chat.id, "Бот просыпается ...")
+            user_id = message.from_user.id
+            user_data[user_id] =  {
+        'model': 'gpt-4o-2024-08-06', 
+        'messages': [ {'role': 'user', 'content': "{}".format(a)}
+        ]}
+        # import pdb; pdb.set_trace()
+            if len(user_data[user_id] ['messages'])>1:
+                user_data[user_id] ['messages'].append({"role":"user", "content":"{}".format(message.text)})
+            response = dialogue(user_data[user_id] )
+            user_data[user_id] ['messages'].append({"role": "assistant", "content":"{}".format(response)})
+            bot.send_message(message.chat.id, "{}".format(response))
+            bot.register_next_step_handler(message, lambda msg: cont(msg, data_=user_data[user_id]))
+    def cont(message, data_):
+        user_id = message.from_user.id
+       # import pdb; pdb.set_trace()
+        bot.send_message(message.chat.id, "Бот печатает ...")
+        save_action(chat_id=message.chat.id, action_name=user_data[user_id])
+        if len(user_data[user_id] ['messages'])>1:
+            user_data[user_id] ['messages'].append({"role":"user", "content":"{}".format(message.text)})
+        response = dialogue(user_data[user_id])
+        if "ento konchita" in response:
+            all_params = load_parameters()
+        
+            # Сохранение параметров для текущего чата
+            all_params[str(message.chat.id)] = "konchita"
+            save_parameters(all_params)
+            save_action(chat_id=message.chat.id, action_name=user_data[user_id])
+        if "beseda finita" in response:
+            save_action(chat_id=message.chat.id, action_name=user_data[user_id])
+            response, user_data[str(user_id) + "resp"] = response.split("beseda finita")
+            try:
+                params = json.loads(user_data[str(user_id) + "resp"])
+                all_params = load_parameters()
+                all_params[str(message.chat.id)] = params
+                params['username'] = message.from_user.username
+                params['chat_id'] = message.chat.id
+                params['metro_dist'] = 1000
+                save_parameters(all_params)
+                keyboard = types.InlineKeyboardMarkup()
+                button_bar = types.InlineKeyboardButton('Я подписался', callback_data='sub check')
+                keyboard.add(button_bar)
+                bot.send_message(chat_id=message.chat.id, text="Чтобы получить результаты поиска подпишитесь на канал @FlatoonChat", reply_markup=keyboard)
+                
+                send_old_ads_tg(message, all_params)
+                send_old_ads(message, all_params) 
+                activate_test_subscription(message)
+                return
+            except:
+                
+              #  import pdb; pdb.set_trace()
+                while True:
+                    print(123)
+                    try:
+                        user_data[user_id]  = {
+            'model': 'gpt-4o-mini', 
+            'messages': [ {'role': 'user', 'content': "{} преобразуй этот json в корректный json, чтобы можно было преобразовать его с помощью json.loads() в python верни мне чистый json без всяких символов потому что я возьму твой response и засуну в json.loads() вот так json.loads(response) так что сделай без всяких лишних символов чистый json !!  ".format(user_data[str(user_id) + "resp"])}
+            ]}
+                        oo = dialogue(user_data[user_id])
+                        user_data[user_id]  = json.loads(oo)
+                
+                        break
+                    except:
+                        user_data[str(user_id) + "resp"] = oo
+                        print(traceback.format_exc())
+                user_data[user_id]['username'] = message.from_user.username
+                user_data[user_id]['chat_id'] = message.chat.id
+                user_data[user_id]['metro_dist'] = 1000
+                #if user_data[user_id]['sex'] == 
+                all_params = load_parameters()
+                all_params[str(message.chat.id)] = user_data[user_id]
+                save_parameters(all_params)
+                keyboard = types.InlineKeyboardMarkup()
+                button_bar = types.InlineKeyboardButton('Я подписался', callback_data='sub check')
+                keyboard.add(button_bar)
+                bot.send_message(chat_id=message.chat.id, text="Чтобы получить результаты поиска подпишитесь на канал @FlatoonChat", reply_markup=keyboard)
+                 
+                activate_test_subscription(message)
+                return
+        user_data[user_id]['messages'].append({"role": "assistant", "content":"{}".format(response)})
+        bot.send_message(message.chat.id, "{}".format(response))
+        bot.register_next_step_handler(message, lambda msg: cont(msg, data_=user_data[user_id]))
+
     bot.polling(none_stop=True, interval=0, timeout=60)
 
 if __name__ == '__main__':
     while True:
         try:
-            bot_thread1 = Process(target=start_bot1, args=())
+           
             bot_thread2 = Process(target=start_bot2, args=())
             main_thread = Process(target=main, args=())
             
-            bot_thread1.start()
+            
             bot_thread2.start()
-            main_thread.start()
+           # main_thread.start()
 
-            bot_thread1.join()
+            
             bot_thread2.join()
-            main_thread.join()
+           #main_thread.join()
         except Exception as e:
             print(e)
     # Запуск бота
