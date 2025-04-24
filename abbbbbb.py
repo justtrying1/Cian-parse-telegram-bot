@@ -267,9 +267,7 @@ def get_urls(i, min_price, max_price, city, deal_type,room2=0, room1=1, page=1, 
     'model': 'gpt-4o-mini', 
     'messages': [ {'role': 'user', 'content': r"{0} {1}"}
     ]
-}
-            
-            
+} 
             offer_list = list({v['url']:v for v in offer_list}.values())
 
             global offer_list_global

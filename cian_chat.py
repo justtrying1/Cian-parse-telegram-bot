@@ -39,16 +39,24 @@ from selenium.webdriver.common.actions.action_builder import ActionBuilder
 from deepseek import data_, cian, dialogue
 
 DIALOGUES_FILE = "dialogues.json"
+_DIALOGUES_FILE = "_dialogues.json"
 def load_dialogues():
+
     if os.path.exists(DIALOGUES_FILE):
         with open(DIALOGUES_FILE, 'r', encoding='utf-8') as file:
-            return json.load(file)
+            jsonStringA = json.load(file)
+        with open(_DIALOGUES_FILE, 'r', encoding='utf-8') as file:
+            jsonStringB = json.load(file)
+        jsonMerged = {**json.loads(jsonStringA), **json.loads(jsonStringB)}
+        return jsonMerged
     return {}
 
+def save__dialogues(params):
+    with open(_DIALOGUES_FILE, 'w', encoding='utf-8') as file:
+        json.dump(params, file, ensure_ascii=False)
 def save_dialogues(params):
     with open(DIALOGUES_FILE, 'w', encoding='utf-8') as file:
         json.dump(params, file, ensure_ascii=False)
-
 
 user_data = load_dialogues()
 data_['messages'].append({"role": "assistant", "content":"{}".format("Здравствуйте. Уточните, пожалуйста, ещё сдаёте?")})
@@ -214,10 +222,13 @@ def auau():
 import traceback
 # Получение информации о текущем элементе с фокусом
 def answer_vstrecha(chat_id: int, flat_id: int, message):
-    message = "Клиент пишет: \n{message}"
+    
     chat_id = str(chat_id)
     flat_id = str(flat_id)
     global user_data
+    user_data[chat_id][flat_id]['vstrecha'] = "Клиент пишет: \n{message}"
+    
+
     driver = webdriver.Firefox()
 
     driver.set_window_size(1920, 1080)
@@ -252,7 +263,8 @@ def answer_vstrecha(chat_id: int, flat_id: int, message):
                     break
             except:
                 print(traceback.format_exc())
-
+from telegrambot import load_parameters
+params = load_parameters
 def chat_list_monitoring(chat_id):
     chat_id = str(chat_id)
     global user_data
@@ -303,10 +315,13 @@ def chat_list_monitoring(chat_id):
                         print(traceback.format_exc())
                 if user_data[chat_id][flat_id] ['messages'][-1]['role'] == "assistant":
                     user_data[chat_id][flat_id] ['messages'] = user_data[chat_id][flat_id] ['messages'] + [({"role":"user", "content":"{}".format(message)})]
-                response = dialogue(user_data[chat_id][flat_id])
+                response = dialogue(user_data[chat_id][flat_id], desc=params[chat_id]['general description'])
+                if "vstrecha set" in response:
+                    bot.send_message(chat_id, "Встреча была назначена по объявлению {0} \n\{1}}?".format("https://www.cian.ru/rent/flat/{}/".format(flat_id), response.split("vstrecha set")[1]))
                 if "robot vs robot" in response:
+                    
                     continue
-                if "vstrecha" in response:
+                if "vstrecha vstrecha" in response:
                     button = types.InlineKeyboardButton('Ответить', callback_data="vstrecha {}".format(flat_id))
                     keyboard = types.InlineKeyboardMarkup()
                     keyboard.add(button)

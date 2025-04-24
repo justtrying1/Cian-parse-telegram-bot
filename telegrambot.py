@@ -1305,7 +1305,7 @@ def start_bot2():
         global TINY_DB
         from cian_chat import answer_vstrecha
         from cian_chat import load_dialogues
-        from cian_chat import save_dialogues
+        from cian_chat import save__dialogues
         from cian_chat import hello_rieltor
         chat_id = str(call.message.chat.id)
         if "vstrecha" in call.data:
@@ -1317,7 +1317,7 @@ def start_bot2():
             flat_id = call.data.split(" ")[1]
             user_data = load_dialogues()
             user_data[chat_id][flat_id]['status'] == "negated"
-            save_dialogues(user_data)
+            save__dialogues(user_data)
             bot.send_message(call.message.chat.id, "Хорошо, эта квартира больше не рассматривается")
         if "hello" in call.data:
             flat_id = call.data.split(" ")[1]
@@ -1440,12 +1440,12 @@ def start_bot2():
             'model': 'gpt-4o-mini', 
             'messages': [ {'role': 'user', 'content': "{} преобразуй этот json в корректный json, чтобы можно было преобразовать его с помощью json.loads() в python верни мне чистый json без всяких символов потому что я возьму твой response и засуну в json.loads() вот так json.loads(response) так что сделай без всяких лишних символов чистый json !!  ".format(user_data[str(user_id) + "resp"])}
             ]}
-                        oo = dialogue(user_data[user_id])
-                        user_data[user_id]  = json.loads(oo)
-                
+                        user_data[user_id]["oo"] = dialogue(user_data[user_id])
+                        user_data[user_id]  = json.loads(user_data[user_id]["oo"])
+
                         break
                     except:
-                        user_data[str(user_id) + "resp"] = oo
+                        user_data[str(user_id) + "resp"] = user_data[user_id]["oo"]
                         print(traceback.format_exc())
                 user_data[user_id]['username'] = message.from_user.username
                 user_data[user_id]['chat_id'] = message.chat.id
