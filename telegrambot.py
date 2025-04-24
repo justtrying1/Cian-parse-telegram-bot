@@ -331,8 +331,7 @@ def save_cache(appeared):
                             keyboard.add(button_bar)
                             bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n\nНачали договариваться о просмотре этой квартиры", reply_markup=keyboard)    
                         else:
-                            print("no knopki probably =))")
-
+                            bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n\nНе смогли начать договариваться о просмотре этой квартиры (скорее всего нет кнопки написать)")   
                 
                 if parsed_count > 0: 
                     button_bar = types.InlineKeyboardButton('Да', callback_data="i am here")
