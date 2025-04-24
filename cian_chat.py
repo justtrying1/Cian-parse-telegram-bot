@@ -47,7 +47,7 @@ def load_dialogues():
             jsonStringA = json.load(file)
         with open(_DIALOGUES_FILE, 'r', encoding='utf-8') as file:
             jsonStringB = json.load(file)
-        jsonMerged = {**json.loads(jsonStringA), **json.loads(jsonStringB)}
+        jsonMerged = {**jsonStringA, **jsonStringB}
         return jsonMerged
     return {}
 
