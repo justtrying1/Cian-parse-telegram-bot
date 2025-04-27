@@ -266,15 +266,12 @@ def save_cache(appeared):
         
         if(len(new_filtered_ads)) > 0:
              
-           # import pdb; pdb.set_trace()            
-            
             try:
               #  import pdb; pdb.set_trace()
                 parsed_count = 0
                 for ad in new_filtered_ads:
                   
-                    
-
+            
                     time_ = datetime.strptime(ad['time'], '%Y-%m-%d %H-%M-%S')
                     button_bar = types.InlineKeyboardButton('Показать описание', callback_data='{}'.format(ad['url']))
                     keyboard = types.InlineKeyboardMarkup()
@@ -309,8 +306,9 @@ def save_cache(appeared):
                 
                        
                     
-                    if chat_id == 7494874190:
-                       # import pdb; pdb.set_trace()
+                    if chat_id == 382156916:
+                        #import pdb; pdb.set_trace()
+                        
                         from cian_chat import load_dialogues
                         from cian_chat import hello_rieltor
                         from autosms import register_cian
@@ -329,9 +327,11 @@ def save_cache(appeared):
                             button_bar = types.InlineKeyboardButton('Эта квартира мне не подходит', callback_data="negated {}".format(ad['url'].split("/")[-2]))
                             keyboard = types.InlineKeyboardMarkup()
                             keyboard.add(button_bar)
+                            bot.send_message(7494874190, ad['good_description']+"\n" + msg + "\n\nНачали договариваться о просмотре этой квартиры", reply_markup=keyboard)
                             bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n\nНачали договариваться о просмотре этой квартиры", reply_markup=keyboard)    
                         else:
-                            bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n\nНе смогли начать договариваться о просмотре этой квартиры (скорее всего нет кнопки написать)")   
+                            bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n\n Не смогли начать договариваьтся о просмотре этой квартиы, владелец принимает только звонки")
+
                 
                 if parsed_count > 0: 
                     button_bar = types.InlineKeyboardButton('Да', callback_data="i am here")

@@ -136,8 +136,9 @@ def hello_rieltor(cian_link="", chat_id = 123):
                 # import pdb; pdb.set_trace()
                     ActionChains(driver).send_keys(Keys.TAB).perform()
                     ActionChains(driver).send_keys(Keys.ENTER).perform()
-                    user_data[chat_id][flat_id] = data_.copy()
-                    save_dialogues(user_data)
+                   
+                   # user_data[chat_id][flat_id] = data_.copy()
+                   # save_dialogues(user_data)
                     driver.quit()
                     
                     return True
