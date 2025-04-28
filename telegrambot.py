@@ -8,6 +8,7 @@ import time
 import os
 import re
 import datetime
+from telebot import apihelper
 from datetime import timedelta
 from datetime import datetime
 from copy import deepcopy
@@ -51,10 +52,10 @@ def buy(message):
 
     # Пример товара
     title = "Подписка на сервис"
-    description = """Подходящие под Вас объявления с Циана✅ В течение 3-х минут после появления✅ Экономьте время и будьте первыми"""
+    description = """Сервис находится в экспериментальном режиме! Возможны ошибки в работе! 20 встреч/попыток назначить встречу по вашему запросу"""
     payload = "CUSTOM_PAYLOAD"  # Содержимое, которое будет отправлено обратно
     currency = "XTR"  # Валюта
-    prices = [telebot.types.LabeledPrice("Двухнедельная подписка", 100)] 
+    prices = [telebot.types.LabeledPrice("Переписка по 20 объявлениям", 250)] 
 
     # Отправка запроса на оплату
     bot.send_invoice(
@@ -87,13 +88,14 @@ def get_subscription_state(chat_id):
     all_params = load_parameters()
     now = datetime.now()
     msg = ""
-    if "subscription" in all_params[str(chat_id)]:
+    if "subscription_count" in all_params[str(chat_id)]:
         
-        sub = all_params[str(chat_id)]['subscription']
+        sub = all_params[str(chat_id)]['subscription_count']
     else:
-        sub = all_params[str(chat_id)]['test_subscription']
+        sub = all_params[str(chat_id)]['test_subscription_count']
     
-    if (datetime.strptime(sub, '%d-%m-%Y  %H:%M:%S') - now).total_seconds() > 0:
+    #if (datetime.strptime(sub, '%d-%m-%Y  %H:%M:%S') - now).total_seconds() > 0:
+    if int(sub) > 0:
         
         msg = msg + "Подписка активна до {}".format(sub) + "\n"
         return True, msg
@@ -106,8 +108,8 @@ def activate_subscription(message):
     chat_id = str(message.chat.id)
     all_params = load_parameters()
 
-    all_params[chat_id]['subscription'] = (datetime.now() + timedelta(days=14)).strftime('%d-%m-%Y  %H:%M:%S')
-    
+    all_params[chat_id]['subscription'] = (datetime.now() + timedelta(days=365)).strftime('%d-%m-%Y  %H:%M:%S')
+    all_params[chat_id]['subscription_count'] = (datetime.now() + timedelta(days=365)).strftime('%d-%m-%Y  %H:%M:%S')
     save_parameters(all_params)
 
     bot.send_message(int(message.chat.id), "Ваша двухнедельная подписка активирована")
@@ -132,8 +134,8 @@ def activate_test_subscription(message):
     all_params = load_parameters()
     if 'test_subscription' not in all_params[chat_id]:
 
-        all_params[chat_id]['test_subscription'] = (datetime.now() + timedelta(days=360)).strftime('%d-%m-%Y  %H:%M:%S')
-        
+        all_params[chat_id]['test_subscription'] = (datetime.now() + timedelta(days=365)).strftime('%d-%m-%Y  %H:%M:%S')
+        all_params[chat_id]['test_subscription_count'] = 5
         save_parameters(all_params)
 
       #  bot.send_message(int(message.chat.id), "Ваша трёхдневная подписка активирована")
@@ -273,9 +275,7 @@ def save_cache(appeared):
                   
             
                     time_ = datetime.strptime(ad['time'], '%Y-%m-%d %H-%M-%S')
-                    button_bar = types.InlineKeyboardButton('Показать описание', callback_data='{}'.format(ad['url']))
-                    keyboard = types.InlineKeyboardMarkup()
-                    keyboard.add(button_bar)
+                    
                     msg = f"""\nАктуально на {time_}\n
 {ad['title']}
 🚇метро: {ad['underground']} {ad['metro_dist']}
@@ -300,37 +300,56 @@ def save_cache(appeared):
                         if ("test_subscription" not in all_params[i]) & ("subscription" not in all_params[i]):
                             sub_flag = True
                         elif get_subscription_state(chat_id)[0]:
-                            bot.send_message(chat_id, msg, reply_markup=keyboard)   
+                                
+                            from cian_chat import load_dialogues
+                            from cian_chat import hello_rieltor
+                            from autosms import register_cian
+                            dialogues = load_dialogues()
+                            if 'good_description' not in ad:
+                                ad['good_description'] = " "
+                            #bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n")
+                            from autosms import register_cian
+                            import os.path
+                            if not os.path.isfile("{}.pkl".format(chat_id)):
+                                register_cian(chat_id=chat_id)
+                                
+                            good_bye = hello_rieltor(cian_link=ad['url'], chat_id=chat_id)
+                            
+                            if good_bye:
+                                all_params.get(i)['test_subscription_count'] = str(int(all_params.get(i)['test_subscription_count']) - 1)
+                                try:
+                                    all_params.get(i)['subscription_count'] = str(int(all_params.get(i)['subscription_count']) - 1)
+                                except:
+                                    pass
+                                button_bar = types.InlineKeyboardButton('Эта квартира мне не подходит', callback_data="negated {}".format(ad['url'].split("/")[-2]))
+                                keyboard = types.InlineKeyboardMarkup()
+                                keyboard.add(button_bar)
+                                bot.send_message(7494874190, ad['good_description']+"\n" + msg + "\n\nНачали договариваться о просмотре этой квартиры " + +"\n"+ str(chat_id), reply_markup=keyboard)
+                                try:
+                                    bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n\nНачали договариваться о просмотре этой квартиры", reply_markup=keyboard)    
+                                except apihelper.ApiException as e:
+                                    if e.error_code == 403:
+                                        del all_params[i]
+                                        save_parameters(all_params)
+                                        break
+                                    else:
+                                        print(f"Ошибка при отправке сообщения: {e}")
+                            else:
+                                try:
+                                    bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n\n Не смогли начать договариваьтся о просмотре этой квартиы, владелец принимает только звонки")   
+                                except apihelper.ApiException as e:
+                                    if e.error_code == 403:
+                                        del all_params[i]
+                                        save_parameters(all_params)
+                                        break
+                                    else:
+                                        print(f"Ошибка при отправке сообщения: {e}")
+
                         else:
                             sub_flag = True
                 
                        
                     
-                    if chat_id == 382156916:
-                        #import pdb; pdb.set_trace()
-                        
-                        from cian_chat import load_dialogues
-                        from cian_chat import hello_rieltor
-                        from autosms import register_cian
-                        dialogues = load_dialogues()
-                        if 'good_description' not in ad:
-                            ad['good_description'] = " "
-                        bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n")
-                        from autosms import register_cian
-                        import os.path
-                        if not os.path.isfile("{}.pkl".format(chat_id)):
-                            register_cian(chat_id=chat_id)
-                            
-                        good_bye = hello_rieltor(cian_link=ad['url'], chat_id=chat_id)
-                        
-                        if good_bye:
-                            button_bar = types.InlineKeyboardButton('Эта квартира мне не подходит', callback_data="negated {}".format(ad['url'].split("/")[-2]))
-                            keyboard = types.InlineKeyboardMarkup()
-                            keyboard.add(button_bar)
-                            bot.send_message(7494874190, ad['good_description']+"\n" + msg + "\n\nНачали договариваться о просмотре этой квартиры", reply_markup=keyboard)
-                            bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n\nНачали договариваться о просмотре этой квартиры", reply_markup=keyboard)    
-                        else:
-                            bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n\n Не смогли начать договариваьтся о просмотре этой квартиы, владелец принимает только звонки")
 
                 
                 if parsed_count > 0: 
@@ -341,7 +360,7 @@ def save_cache(appeared):
                     keyboard.add(button_bar2)
                     
                     if sub_flag:
-                        bot.send_message(chat_id, "Чтобы получать новые объявления активируйте тестовую подписку с помощью /test_subscription или приобретите двухнедельную подписку с помощью команды /buy")
+                        bot.send_message(chat_id, "Чтобы получать новые объявления активируйте подписку с помощью команды /buy")
                     else:
                         if "answered" not in all_params.get(i).keys():
 
@@ -359,8 +378,14 @@ def load_parameters():
 
 # Функция для сохранения параметров в файл
 def save_parameters(params):
-    with open(PARAMS_FILE, 'w', encoding='utf-8') as file:
-        json.dump(params, file, ensure_ascii=False)
+    while True:
+        try:
+            with open(PARAMS_FILE, 'w', encoding='utf-8') as file:
+                json.dump(params, file, ensure_ascii=False)
+            break
+        except:
+            print(traceback.format_exc())
+            time.sleep(3)
 
 def get_chat_parameters(chat_id):
     all_params = load_parameters()
@@ -428,7 +453,7 @@ def send_old_ads_tg(message, params,dont_flag = 0, flag = False):
         if dont_flag > 4:
             return
         all_params[str(message.chat.id)] = params
-        send_old_ads_tg(message, all_params,dont_flag, flag=True)
+        #send_old_ads_tg(message, all_params,dont_flag, flag=True)
     
 def send_old_ads(message, params,dont_flag = 0, flag = False):
     all_params = params
@@ -468,7 +493,7 @@ def send_old_ads(message, params,dont_flag = 0, flag = False):
                 button_bar2 = types.InlineKeyboardButton('Договориться о просмотре этой квартиры', callback_data="hello {}".format(flat_id))
                 keyboard = types.InlineKeyboardMarkup()
                 keyboard.add(button_bar2)
-                bot.send_message(message.chat.id, msg, reply_markup=keyboard)
+                bot.send_message(message.chat.id, msg,reply_markup=keyboard) # , reply_markup=keyboard !!!!!!! Когда сделаешь
                 count = count + 1 
                 do_flag = True
             if count > 3 or (datetime.strptime(ad['time'], '%Y-%m-%d  %H-%M-%S') - datetime.now()).days > 10:
@@ -769,7 +794,7 @@ def main():
            # import pdb; pdb.set_trace()
             try:
                 bot.get_chat_member(chat_id=-1002495178490, user_id=call.message.from_user.id)
-                send_old_ads_tg(call.message, all_params)
+                #send_old_ads_tg(call.message, all_params)
                 send_old_ads(call.message, all_params)
             except:
                 print(traceback.format_exc())
@@ -1034,7 +1059,7 @@ def main():
                 keyboard.add(button_bar)
                 bot.send_message(chat_id=message.chat.id, text="Чтобы получить результаты поиска подпишитесь на канал @FlatoonChat", reply_markup=keyboard)
                 
-                send_old_ads_tg(message, all_params)
+                #send_old_ads_tg(message, all_params)
                 send_old_ads(message, all_params) 
                 activate_test_subscription(message)
                 return
@@ -1289,7 +1314,7 @@ def main():
         save_parameters(all_params) 
         all_params = load_parameters()
        # import pdb;pdb.set_trace()
-        send_old_ads_tg(message, all_params)
+        #send_old_ads_tg(message, all_params)
         send_old_ads(message, all_params) 
         activate_test_subscription(message)
 
@@ -1336,7 +1361,7 @@ def start_bot2():
         # import pdb; pdb.set_trace()
             try:
                 bot.get_chat_member(chat_id=-1002495178490, user_id=call.message.from_user.id)
-                send_old_ads_tg(call.message, all_params)
+                ##send_old_ads_tg(call.message, all_params)
                 send_old_ads(call.message, all_params)
             except:
                 print(traceback.format_exc())
@@ -1425,13 +1450,13 @@ def start_bot2():
                 keyboard.add(button_bar)
                 bot.send_message(chat_id=message.chat.id, text="Чтобы получить результаты поиска подпишитесь на канал @FlatoonChat", reply_markup=keyboard)
                 
-                send_old_ads_tg(message, all_params)
+                ##send_old_ads_tg(message, all_params)
                 send_old_ads(message, all_params) 
                 activate_test_subscription(message)
                 return
             except:
                 
-              #  import pdb; pdb.set_trace()
+             
                 while True:
                     print(123)
                     try:
@@ -1439,13 +1464,18 @@ def start_bot2():
             'model': 'gpt-4o-mini', 
             'messages': [ {'role': 'user', 'content': "{} преобразуй этот json в корректный json, чтобы можно было преобразовать его с помощью json.loads() в python верни мне чистый json без всяких символов потому что я возьму твой response и засуну в json.loads() вот так json.loads(response) так что сделай без всяких лишних символов чистый json !!  ".format(user_data[str(user_id) + "resp"])}
             ]}
+                        print(123123123)
                         user_data[user_id]["oo"] = dialogue(user_data[user_id])
+                        
                         user_data[user_id]  = json.loads(user_data[user_id]["oo"])
-
+                        print(123123)
                         break
                     except:
+                        print("error rerererererer")
+                      #  import pdb; pdb.set_trace()
                         user_data[str(user_id) + "resp"] = user_data[user_id]["oo"]
                         print(traceback.format_exc())
+                print(123123123123123123123123123123)
                 user_data[user_id]['username'] = message.from_user.username
                 user_data[user_id]['chat_id'] = message.chat.id
                 user_data[user_id]['metro_dist'] = 1000
@@ -1469,7 +1499,7 @@ def start_bot2():
 if __name__ == '__main__':
     while True:
         try:
-           
+         #   import pdb; pdb.set_trace()
             bot_thread2 = Process(target=start_bot2, args=())
             main_thread = Process(target=main, args=())
             

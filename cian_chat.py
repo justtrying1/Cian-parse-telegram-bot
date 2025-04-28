@@ -40,6 +40,7 @@ from deepseek import data_, cian, dialogue
 
 DIALOGUES_FILE = "dialogues.json"
 _DIALOGUES_FILE = "_dialogues.json"
+
 def load_dialogues():
 
     if os.path.exists(DIALOGUES_FILE):
@@ -59,7 +60,7 @@ def save_dialogues(params):
         json.dump(params, file, ensure_ascii=False)
 
 user_data = load_dialogues()
-data_['messages'].append({"role": "assistant", "content":"{}".format("Здравствуйте. Уточните, пожалуйста, ещё сдаёте?")})
+#data_['messages'].append({"role": "assistant", "content":"{}".format("Здравствуйте. Уточните, пожалуйста, ещё сдаёте?")})
 
 OLD_JSON = r"&rent&30000&40000&1 room&Москва&2024-09-30 22-40-46.json"
 def load_old():
@@ -81,6 +82,7 @@ def load_cookie(driver, chat_id):
         driver.add_cookie(cookie)
 
 def hello_rieltor(cian_link="", chat_id = 123):
+    
     #import pdb; pdb.set_trace()
     
     global user_data
@@ -133,16 +135,52 @@ def hello_rieltor(cian_link="", chat_id = 123):
                             #import pdb; pdb.set_trace()
                 
                 if break_flag:
-                # import pdb; pdb.set_trace()
+                    import pdb; pdb.set_trace()
                     ActionChains(driver).send_keys(Keys.TAB).perform()
+                    time.sleep(3)
                     ActionChains(driver).send_keys(Keys.ENTER).perform()
                    
                    # user_data[chat_id][flat_id] = data_.copy()
                    # save_dialogues(user_data)
-                    driver.quit()
-                    
-                    return True
-                    break
+                    driver.get("https://www.cian.ru/dialogs")
+    
+                    WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div/div[1]/div[2]")))
+                    time.sleep(3)
+                    print(len(driver.find_element(By.XPATH, "/html/body/div[1]/div/div[1]/div[2]").find_elements(By.XPATH, '//div[@data-name="ChatListItem"]')))
+                    #import pdb; pdb.set_trace()
+                    while True:
+                        flag = False
+                        for i in driver.find_elements(By.XPATH, '//div[@data-name="ChatListItem"]'):
+                            if i.text.split('\n')[0] == "Циан":
+                                continue
+                            print(i.get_attribute('data-chatid'))
+                            try:
+                                flat__id = i.get_attribute('data-chatid').split("_")[-1]
+                                if flat_id == flat__id:
+                                    if chat_id not in user_data:
+                                        user_data[chat_id] = {}
+                                    if flat_id not in user_data[chat_id]:
+                                        user_data[chat_id][flat_id] = data_.copy()
+                                    elif user_data[chat_id][flat_id]['status'] == "negated":
+                                        continue
+                                    response = dialogue(user_data[chat_id][flat_id], desc=params[chat_id]['general description'])
+                                    i.click()
+                                    driver.find_element(By.XPATH, "/html/body/div[1]/div/div[2]/div[1]/div[4]/div[2]/div/textarea[1]").send_keys(response) 
+                                    
+                                    time.sleep(2)
+                                    if user_data[chat_id][flat_id] ['messages'][-1]['role'] == "user":
+                                        user_data[chat_id][flat_id] ['messages'] = user_data[chat_id][flat_id] ['messages'] + [({"role":"assistant", "content":"{}".format(response)})]
+
+                                    driver.find_element(By.XPATH, "/html/body/div[1]/div/div[2]/div[1]/div[4]/div[2]/div/button[2]").click()
+                                    time.sleep(2)
+                                    flag = True
+                                    break
+                            except:
+                                print(traceback.format_exc())
+                        driver.quit()
+                        
+                        return True
+                        break
                 break_flag = True
             # Вывести информацию о фокусированном элементе
             print("Элемент с фокусом:")
@@ -150,6 +188,7 @@ def hello_rieltor(cian_link="", chat_id = 123):
             print(f"Class Name: {class_name}")
             print(f"ID: {element_id}")
             print(f"Inner Text: {inner_text}")
+    
             
            
 def auau():
@@ -212,7 +251,7 @@ def auau():
                         print(f"Inner Text: {inner_text}")
 
                         time.sleep(0)  # Проверка каждые 500 миллисекунд
-
+    
 
 #def get_chats_amount():
    
@@ -265,7 +304,7 @@ def answer_vstrecha(chat_id: int, flat_id: int, message):
             except:
                 print(traceback.format_exc())
 from telegrambot import load_parameters
-params = load_parameters
+params = load_parameters()
 def chat_list_monitoring(chat_id):
     chat_id = str(chat_id)
     global user_data
@@ -318,7 +357,7 @@ def chat_list_monitoring(chat_id):
                     user_data[chat_id][flat_id] ['messages'] = user_data[chat_id][flat_id] ['messages'] + [({"role":"user", "content":"{}".format(message)})]
                 response = dialogue(user_data[chat_id][flat_id], desc=params[chat_id]['general description'])
                 if "vstrecha set" in response:
-                    bot.send_message(chat_id, "Встреча была назначена по объявлению {0} \n\{1}}?".format("https://www.cian.ru/rent/flat/{}/".format(flat_id), response.split("vstrecha set")[1]))
+                    bot.send_message(chat_id, "Встреча была назначена по объявлению {0} \n{1}".format("https://www.cian.ru/rent/flat/{}/".format(flat_id), response.split("vstrecha set")[1]))
                 if "robot vs robot" in response:
                     
                     continue
@@ -371,7 +410,17 @@ def chat_list_monitoring(chat_id):
 
    
 if __name__ == "__main__":
-    chat_list_monitoring(7494874190)
+    #import pdb; pdb.set_trace()
+    import threading
+    dialogues = load_dialogues()
+    dialogues_keys = set(dialogues.keys())
+    while True:
+        for key in dialogues_keys:
+            if key != '7494874190':
+                threading.Thread(target=chat_list_monitoring, args=(int(key),))
+        dialogues = load_dialogues()
+        dialogue_keys = set(dialogues.keys()) - dialogues_keys
+        time.sleep(10)
 
 #data['amount_after'] = get_chats_amount()
 
