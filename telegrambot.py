@@ -316,9 +316,9 @@ def save_cache(appeared):
                             good_bye = hello_rieltor(cian_link=ad['url'], chat_id=chat_id)
                             
                             if good_bye:
-                                all_params.get(i)['test_subscription_count'] = int(all_params.get(i)['test_subscription_count']) - 1
+                                all_params.get(i)['test_subscription_count'] = str(int(all_params.get(i)['test_subscription_count']) - 1)
                                 try:
-                                    all_params.get(i)['subscription_count'] = int(all_params.get(i)['subscription_count']) - 1
+                                    all_params.get(i)['subscription_count'] = str(int(all_params.get(i)['subscription_count']) - 1)
                                 except:
                                     pass
                                 button_bar = types.InlineKeyboardButton('Эта квартира мне не подходит', callback_data="negated {}".format(ad['url'].split("/")[-2]))
@@ -1337,10 +1337,7 @@ def start_bot2():
             bot.send_message(call.message.chat.id, "Теперь напишите свой ответ")
             bot.register_next_step_handler(call.message, lambda msg: answer_vstrecha(chat_id=call.message.chat.id, flat_id = flat_id, message=call.message.text))
         if "negated" in call.data:
-            all_params = load_parameters()
-            if 'subscription_count' in all_params[chat_id]:
-                all_params[chat_id]['test_subscription_count'] = int(all_params[chat_id]['test_subscription_count']) + 1
-            all_params[chat_id]['test_subscription_count'] = int(all_params[chat_id]['test_subscription_count']) + 1
+            
             flat_id = call.data.split(" ")[1]
             user_data = load_dialogues()
             user_data[chat_id][flat_id]['status'] == "negated"
