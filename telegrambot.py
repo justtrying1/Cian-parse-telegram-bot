@@ -316,15 +316,15 @@ def save_cache(appeared):
                             good_bye = hello_rieltor(cian_link=ad['url'], chat_id=chat_id)
                             
                             if good_bye:
-                                all_params.get(i)['test_subscription_count'] = str(int(all_params.get(i)['test_subscription_count']) - 1)
+                                all_params.get(i)['test_subscription_count'] = int(all_params.get(i)['test_subscription_count']) - 1
                                 try:
-                                    all_params.get(i)['subscription_count'] = str(int(all_params.get(i)['subscription_count']) - 1)
+                                    all_params.get(i)['subscription_count'] = int(all_params.get(i)['subscription_count']) - 1
                                 except:
                                     pass
                                 button_bar = types.InlineKeyboardButton('Эта квартира мне не подходит', callback_data="negated {}".format(ad['url'].split("/")[-2]))
                                 keyboard = types.InlineKeyboardMarkup()
                                 keyboard.add(button_bar)
-                                bot.send_message(7494874190, ad['good_description']+"\n" + msg + "\n\nНачали договариваться о просмотре этой квартиры " + +"\n"+ str(chat_id), reply_markup=keyboard)
+                                bot.send_message(7494874190, ad['good_description']+"\n" + msg + "\n\nНачали договариваться о просмотре этой квартиры "  +"\n"+ str(chat_id), reply_markup=keyboard)
                                 try:
                                     bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n\nНачали договариваться о просмотре этой квартиры", reply_markup=keyboard)    
                                 except apihelper.ApiException as e:
@@ -360,7 +360,7 @@ def save_cache(appeared):
                     keyboard.add(button_bar2)
                     
                     if sub_flag:
-                        bot.send_message(chat_id, "Чтобы получать новые объявления активируйте подписку с помощью команды /buy")
+                        bot.send_message(chat_id, "Лимит объявлений исчерпан, бот продолжит договариваться по предыдущим объявлениям, чтобы получить 20 новых объявлений воспользуйтесь командой /buy")
                     else:
                         if "answered" not in all_params.get(i).keys():
 
@@ -1337,7 +1337,11 @@ def start_bot2():
             bot.send_message(call.message.chat.id, "Теперь напишите свой ответ")
             bot.register_next_step_handler(call.message, lambda msg: answer_vstrecha(chat_id=call.message.chat.id, flat_id = flat_id, message=call.message.text))
         if "negated" in call.data:
-            
+            all_params = load_parameters()
+            if 'subscription_count' in all_params[chat_id]:
+                all_params[chat_id]['subscription_count'] = all_params[chat_id]['subscription_count'] + 1
+            all_params[chat_id]['test_subscription_count'] = all_params[chat_id]['test_subscription_count'] + 1
+            save_parameters(all_params)
             flat_id = call.data.split(" ")[1]
             user_data = load_dialogues()
             user_data[chat_id][flat_id]['status'] == "negated"
@@ -1493,10 +1497,11 @@ def start_bot2():
         user_data[user_id]['messages'].append({"role": "assistant", "content":"{}".format(response)})
         bot.send_message(message.chat.id, "{}".format(response))
         bot.register_next_step_handler(message, lambda msg: cont(msg, data_=user_data[user_id]))
-
     bot.polling(none_stop=True, interval=0, timeout=60)
+   
 
 if __name__ == '__main__':
+    
     while True:
         try:
          #   import pdb; pdb.set_trace()

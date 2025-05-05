@@ -135,11 +135,11 @@ def hello_rieltor(cian_link="", chat_id = 123):
                             #import pdb; pdb.set_trace()
                 
                 if break_flag:
-                    import pdb; pdb.set_trace()
+                    #import pdb; pdb.set_trace()
                     ActionChains(driver).send_keys(Keys.TAB).perform()
                     time.sleep(3)
                     ActionChains(driver).send_keys(Keys.ENTER).perform()
-                   
+                    time.sleep(3)
                    # user_data[chat_id][flat_id] = data_.copy()
                    # save_dialogues(user_data)
                     driver.get("https://www.cian.ru/dialogs")
@@ -147,7 +147,7 @@ def hello_rieltor(cian_link="", chat_id = 123):
                     WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div/div[1]/div[2]")))
                     time.sleep(3)
                     print(len(driver.find_element(By.XPATH, "/html/body/div[1]/div/div[1]/div[2]").find_elements(By.XPATH, '//div[@data-name="ChatListItem"]')))
-                    #import pdb; pdb.set_trace()
+                    import pdb; pdb.set_trace()
                     while True:
                         flag = False
                         for i in driver.find_elements(By.XPATH, '//div[@data-name="ChatListItem"]'):
@@ -170,7 +170,7 @@ def hello_rieltor(cian_link="", chat_id = 123):
                                     time.sleep(2)
                                     if user_data[chat_id][flat_id] ['messages'][-1]['role'] == "user":
                                         user_data[chat_id][flat_id] ['messages'] = user_data[chat_id][flat_id] ['messages'] + [({"role":"assistant", "content":"{}".format(response)})]
-
+                                    save_dialogues(user_data)
                                     driver.find_element(By.XPATH, "/html/body/div[1]/div/div[2]/div[1]/div[4]/div[2]/div/button[2]").click()
                                     time.sleep(2)
                                     flag = True
@@ -312,15 +312,8 @@ def chat_list_monitoring(chat_id):
     driver.set_window_size(1920, 1080)
     driver.get("https://cian.ru")
     load_cookie(driver, chat_id)
-    driver.get("https://www.cian.ru")
-    baba = driver.find_element(By.XPATH, "/html/body/header/div/div/div[1]/div/div[2]/div/a[2]").click() 
-
-    while True:
-        try:
-            driver.switch_to.window(driver.window_handles[1])
-            break
-        except:
-            pass
+    driver.get("https://www.cian.ru/dialogs")
+   
     WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div/div[1]/div[2]")))
     time.sleep(3)
     print(len(driver.find_element(By.XPATH, "/html/body/div[1]/div/div[1]/div[2]").find_elements(By.XPATH, '//div[@data-name="ChatListItem"]')))
@@ -416,11 +409,11 @@ if __name__ == "__main__":
     dialogues_keys = set(dialogues.keys())
     while True:
         for key in dialogues_keys:
-            if key != '7494874190':
-                threading.Thread(target=chat_list_monitoring, args=(int(key),))
+            if (key != '7494874190') and (key != '781665670'):
+                threading.Thread(target=chat_list_monitoring, args=(int(key),)).start()
         dialogues = load_dialogues()
-        dialogue_keys = set(dialogues.keys()) - dialogues_keys
-        time.sleep(10)
+        dialogues_keys = set(dialogues.keys()) - dialogues_keys
+        time.sleep(100)
 
 #data['amount_after'] = get_chats_amount()
 
