@@ -65,7 +65,7 @@ import traceback
 #import pdb; pdb.set_trace()
 
 def register_cian(chat_id=123):
-    bot.send_message(int(chat_id), "Регистрируем новый Циан аккаунт...")
+   
     try:
         driver.get("http://www.cian.ru")
         time.sleep(3)

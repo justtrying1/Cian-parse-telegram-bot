@@ -241,7 +241,22 @@ def save_cache_tg(appeared):
                 print(traceback.format_exc())
                 
            # save_action("sent", sent_list)
-        
+EDIT_FILE = "edit.json"
+def load_edit():
+    if os.path.exists(EDIT_FILE):
+        with open(EDIT_FILE, 'r', encoding='utf-8') as file:
+            return json.load(file)
+import threading 
+def save_edit(edit):
+    while True:
+        try:
+            with open(EDIT_FILE, 'w', encoding='utf-8') as file:
+                json.dump(edit, file, ensure_ascii=False)
+            break
+        except:
+            print(traceback.format_exc())
+            time.sleep(3)
+
 def save_cache(appeared):
     
     all_params = load_parameters()
@@ -272,10 +287,7 @@ def save_cache(appeared):
               #  import pdb; pdb.set_trace()
                 parsed_count = 0
                 for ad in new_filtered_ads:
-                  
-            
                     time_ = datetime.strptime(ad['time'], '%Y-%m-%d %H-%M-%S')
-                    
                     msg = f"""\nАктуально на {time_}\n
 {ad['title']}
 🚇метро: {ad['underground']} {ad['metro_dist']}
@@ -312,39 +324,65 @@ def save_cache(appeared):
                             import os.path
                             if not os.path.isfile("{}.pkl".format(chat_id)):
                                 register_cian(chat_id=chat_id)
+                            edit = load_edit()
+                            if i == 7494874190:
                                 
-                            good_bye = hello_rieltor(cian_link=ad['url'], chat_id=chat_id)
-                            
-                            if good_bye:
-                                all_params.get(i)['test_subscription_count'] = int(all_params.get(i)['test_subscription_count']) - 1
-                                try:
-                                    all_params.get(i)['subscription_count'] = int(all_params.get(i)['subscription_count']) - 1
-                                except:
-                                    pass
-                                button_bar = types.InlineKeyboardButton('Эта квартира мне не подходит', callback_data="negated {}".format(ad['url'].split("/")[-2]))
-                                keyboard = types.InlineKeyboardMarkup()
-                                keyboard.add(button_bar)
-                                bot.send_message(7494874190, ad['good_description']+"\n" + msg + "\n\nНачали договариваться о просмотре этой квартиры "  +"\n"+ str(chat_id), reply_markup=keyboard)
-                                try:
-                                    bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n\nНачали договариваться о просмотре этой квартиры", reply_markup=keyboard)    
-                                except apihelper.ApiException as e:
-                                    if e.error_code == 403:
-                                        del all_params[i]
-                                        save_parameters(all_params)
-                                        break
-                                    else:
-                                        print(f"Ошибка при отправке сообщения: {e}")
-                            else:
-                                try:
-                                    bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n\n Не смогли начать договариваьтся о просмотре этой квартиы, владелец принимает только звонки")   
-                                except apihelper.ApiException as e:
-                                    if e.error_code == 403:
-                                        del all_params[i]
-                                        save_parameters(all_params)
-                                        break
-                                    else:
-                                        print(f"Ошибка при отправке сообщения: {e}")
+                                good_bye = hello_rieltor(cian_link=ad['url'], chat_id="two males")
+                                t2 = threading.Thread(target=hello_rieltor, args=(ad['url'], "animals", 333,) )
+                                t2.start()
+                                
 
+                                if good_bye:
+                                    edit[ad['url']] = {}
+                                    edit[ad['url']]["hello_rieltor"] = 1
+                                    edit[ad['url']]['messages'] = {}
+                                    try:
+                                        bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n\nМожно ли двум мужчинам: ждем ответа \n Можно ли с животными: ждем ответа"  +"\n"+ str(chat_id))    
+                                    except apihelper.ApiException as e:
+                                        if e.error_code == 403:
+                                            del all_params[i]
+                                            save_parameters(all_params)
+                                            break
+                                        else:
+                                            print(f"Ошибка при отправке сообщения: {e}")
+                                
+                                else:
+                                    edit[ad['url']]["hello_rietlor"] = 0
+                                    try:
+                                        bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n\n Не смогли написать автору объявления")   
+                                    except apihelper.ApiException as e:
+                                        if e.error_code == 403:
+                                            del all_params[i]
+                                            save_parameters(all_params)
+                                            break
+                                        else:
+                                            print(f"Ошибка при отправке сообщения: {e}")
+                                save_edit()
+                            else:
+                                if edit[ad['url']]['hello_rieltor'] == 1:
+                                    
+                                    try:
+                                        sent_message = bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n\nМожно ли двум мужчинам: ждем ответа \n Можно ли с животными: ждем ответа \n Можно ли одному мужчине: ждем ответа"  +"\n"+ str(chat_id))    
+                                        edit[ad['url']]['messages'][i] = sent_message.message_id
+                                        edit[ad['url']]['text'] = sent_message.text
+                                    except apihelper.ApiException as e:
+                                        if e.error_code == 403:
+                                            del all_params[i]
+                                            save_parameters(all_params)
+                                            break
+                                        else:
+                                            print(f"Ошибка при отправке сообщения: {e}")
+                                else:
+                                    edit[ad['url']] = 0
+                                    try:
+                                        bot.send_message(chat_id, ad['good_description']+"\n" + msg + "\n\n Не смогли написать автору объявления")   
+                                    except apihelper.ApiException as e:
+                                        if e.error_code == 403:
+                                            del all_params[i]
+                                            save_parameters(all_params)
+                                            break
+                                        else:
+                                            print(f"Ошибка при отправке сообщения: {e}")
                         else:
                             sub_flag = True
                 
@@ -627,15 +665,16 @@ def parse_addon(addon, params, good_description, strict=False, telegram=False):
             try: 
                 for rooms in params['rooms']:      
                         rooms_list.append(rooms['rooms'])
-                        if (("сдача студ" in addon['классификация объявления']) or ('сдача однок' in addon['классификация объявления'])) and (((1 == rooms['rooms']) and ((rooms['min_price']) <= addon['стоимость месячной аренды'] <= rooms['max_price']))):
+                        if (((addon['станция метро'] in addon['undergrounds'])) and  ("сдача студ" in addon['классификация объявления']) or ('сдача однок' in addon['классификация объявления'])) and (((1 == rooms['rooms']) and ((rooms['min_price']) <= addon['стоимость месячной аренды'] <= rooms['max_price']))):
                             raise Exception
-                        if (("сдача двухкомнатной квартиры" in addon['классификация объявления'])) and (((2 == rooms['rooms']) and ((rooms['min_price']) <= addon['стоимость месячной аренды'] <= rooms['max_price']))):
+                        if (((addon['станция метро'] in addon['undergrounds'])) and (addon['станция метро'] in addon['undergrounds']) and ("сдача двухкомнатной квартиры" in addon['классификация объявления'])) and (((2 == rooms['rooms']) and ((rooms['min_price']) <= addon['стоимость месячной аренды'] <= rooms['max_price']))):
                             raise Exception
-                        if (("сдача трехкомнатной квартиры" in addon['классификация объявления']) and (((3 == rooms['rooms'])) and ((rooms['min_price']) <= addon['стоимость месячной аренды'] <= rooms['max_price']))):
+                        if (((addon['станция метро'] in addon['undergrounds'])) and (addon['станция метро'] in addon['undergrounds']) and ("сдача трехкомнатной квартиры" in addon['классификация объявления']) and (((3 == rooms['rooms'])) and ((rooms['min_price']) <= addon['стоимость месячной аренды'] <= rooms['max_price']))):
                             raise Exception
-                        if ("сдача комнаты" in addon['классификация объявления']) and (((0 == rooms['rooms']) and (rooms['min_price'] <= addon['стоимость месячной аренды'] <= rooms['max_price']))):
+                        if ((addon['станция метро'] in addon['undergrounds'])) and ("сдача комнаты" in addon['классификация объявления']) and (((0 == rooms['rooms']) and (rooms['min_price'] <= addon['стоимость месячной аренды'] <= rooms['max_price']))):
                             raise Exception
                         
+                            
             except:
                 exc_flag = True
             finally:
@@ -1016,7 +1055,7 @@ def main():
             bot.send_message(message.chat.id, "Бот просыпается ...")
             user_id = message.from_user.id
             user_data[user_id] =  {
-        'model': 'gpt-4o-2024-08-06', 
+        'model': 'gpt-4.1-2025-04-14', 
         'messages': [ {'role': 'user', 'content': "{}".format(a)}
         ]}
         # import pdb; pdb.set_trace()
@@ -1347,18 +1386,7 @@ def start_bot2():
             user_data[chat_id][flat_id]['status'] == "negated"
             save__dialogues(user_data)
             bot.send_message(call.message.chat.id, "Хорошо, эта квартира больше не рассматривается")
-        if "hello" in call.data:
-            flat_id = call.data.split(" ")[1]
             
-            bot.send_message(call.message.chat.id, "Пишем автору объявления...")
-            
-            good_bye = hello_rieltor("https://cian.ru/rent/flat/{}".format(flat_id), chat_id=call.message.chat.id)
-            
-            if good_bye:
-                button_bar = types.InlineKeyboardButton('Эта квартира мне не подходит', callback_data="negated {}".format(flat_id))
-                keyboard = types.InlineKeyboardMarkup()
-                keyboard.add(button_bar)
-                bot.send_message(chat_id, "https://cian.ru/rent/flat/{}".format(flat_id) + "\n\nНачали договариваться о просмотре этой квартиры", reply_markup=keyboard)    
             
         if "sub" in call.data:
             all_params = load_parameters()

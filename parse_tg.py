@@ -74,9 +74,7 @@ def parse_tg():
                 else:
                     old_json[channel] = []
                # import pdb; pdb.set_trace()
-                if len(post_list) > 0:
-                     
-                          
+                if len(post_list) > 0:  
                     while True:
                         if(break_flag):
                             break
@@ -89,6 +87,7 @@ def parse_tg():
                     for filtered_post in post_list:
                         global dt
                         addon, good_description = chain_prompt(data=dt, desc=filtered_post["text"], type = 1,telegram=True)
+                       
                         filtered_post["addon"] = addon
                         filtered_post["good_description"] = good_description
                         dt = {

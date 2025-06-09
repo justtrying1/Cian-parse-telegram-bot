@@ -36,7 +36,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.actions.action_builder import ActionBuilder
-from deepseek import data_, cian, dialogue
+from ai import data_, cian, dialogue
 
 DIALOGUES_FILE = "dialogues.json"
 _DIALOGUES_FILE = "_dialogues.json"
@@ -80,9 +80,11 @@ def load_cookie(driver, chat_id):
         cookies = pickle.load(file)
     for cookie in cookies:
         driver.add_cookie(cookie)
+two_males_message = "Не пугайтесь, что вы так быстро видите это сообщение, это не спам, просто я айтишник и отправляю его всем подходящим по цене и метро квартирам как только они появятся =). Меня зовут Илья заинтересовала ваша квартира Снимать планируем вдвоем, я и мой друг. Мне 25 лет, другу 27, гражданство РФ, занятость в IT, доход стабильный, чистоту квартиры гарантируем, можно ли посмотреть квартиру в ближайшее время?"
+animals_message = "Здравствуйте, понравилась ваше объявление. Обо мне: зовут Ольга, 27 лет, родом из Санкт-Петербурга, работаю в консалтинговой фирме с оплатой проблем не будет, люблю когда в квартире чисто, регулярно убираюсь. Есть кот: кастрированный и очень умный сибирской породы, приучен к котгеточке - мебель не дерёт, могу прислать фотку. В общем, надеюсь на ваше понимание."
 
-def hello_rieltor(cian_link="", chat_id = 123):
-    
+def hello_rieltor(cian_link="", chat_id = 123, delay = 0):
+    time.sleep(delay)
     #import pdb; pdb.set_trace()
     
     global user_data
@@ -104,11 +106,10 @@ def hello_rieltor(cian_link="", chat_id = 123):
         
     except:
         print(traceback.format_exc())
-        bot.send_message(int(chat_id), "Не удалось написать автору объявления.. Либо объявления не существует, либо автор принимает только звонки")
+        #bot.send_message(int(chat_id), "Не удалось написать автору объявления.. Либо объявления не существует, либо автор принимает только звонки")
         driver.quit()
         return False
-        
-
+    
     break_flag = False
     while True:
             # Получить текущий фокусированный элемент
@@ -163,7 +164,11 @@ def hello_rieltor(cian_link="", chat_id = 123):
                                         user_data[chat_id][flat_id] = data_.copy()
                                     elif user_data[chat_id][flat_id]['status'] == "negated":
                                         continue
-                                    response = dialogue(user_data[chat_id][flat_id], desc=params[chat_id]['general description'])
+                                    if chat_id == "two males":
+                                        response = two_males_message
+                                    if chat_id == "animals":
+                                        response = animals_message
+                                   # response = dialogue(user_data[chat_id][flat_id], desc=params[chat_id]['general description'])
                                     i.click()
                                     driver.find_element(By.XPATH, "/html/body/div[1]/div/div[2]/div[1]/div[4]/div[2]/div/textarea[1]").send_keys(response) 
                                     
@@ -187,10 +192,7 @@ def hello_rieltor(cian_link="", chat_id = 123):
             print(f"Tag Name: {tag_name}")
             print(f"Class Name: {class_name}")
             print(f"ID: {element_id}")
-            print(f"Inner Text: {inner_text}")
-    
-            
-           
+            print(f"Inner Text: {inner_text}")                 
 def auau():
     chat_id = "cookies"
     driver = webdriver.Firefox()
@@ -267,10 +269,8 @@ def answer_vstrecha(chat_id: int, flat_id: int, message):
     flat_id = str(flat_id)
     global user_data
     user_data[chat_id][flat_id]['vstrecha'] = "Клиент пишет: \n{message}"
-    
 
     driver = webdriver.Firefox()
-
     driver.set_window_size(1920, 1080)
     driver.get("https://www.cian.ru")
     load_cookie(driver, chat_id)
@@ -305,6 +305,7 @@ def answer_vstrecha(chat_id: int, flat_id: int, message):
                 print(traceback.format_exc())
 from telegrambot import load_parameters
 params = load_parameters()
+from telegrambot import load_edit, save_edit
 def chat_list_monitoring(chat_id):
     chat_id = str(chat_id)
     global user_data
@@ -348,18 +349,24 @@ def chat_list_monitoring(chat_id):
                         print(traceback.format_exc())
                 if user_data[chat_id][flat_id] ['messages'][-1]['role'] == "assistant":
                     user_data[chat_id][flat_id] ['messages'] = user_data[chat_id][flat_id] ['messages'] + [({"role":"user", "content":"{}".format(message)})]
-                response = dialogue(user_data[chat_id][flat_id], desc=params[chat_id]['general description'])
-                if "vstrecha set" in response:
-                    bot.send_message(chat_id, "Встреча была назначена по объявлению {0} \n{1}".format("https://www.cian.ru/rent/flat/{}/".format(flat_id), response.split("vstrecha set")[1]))
-                if "robot vs robot" in response:
-                    
-                    continue
-                if "vstrecha vstrecha" in response:
-                    button = types.InlineKeyboardButton('Ответить', callback_data="vstrecha {}".format(flat_id))
-                    keyboard = types.InlineKeyboardMarkup()
-                    keyboard.add(button)
-                    bot.send_message(chat_id, "Автор объявления {0} хочет назначить встречу\n\nКогда бы вам было удобно?".format("https://www.cian.ru/rent/flat/{}/".format(flat_id), message), reply_markup=keyboard)
-                    continue
+                import pdb; pdb.set_trace()
+                response = dialogue(user_data[chat_id][flat_id], cian=True)
+                
+                edit = load_edit()
+                url = "https://www.cian.ru/rent/flat/{}/".format(user_data[chat_id][flat_id])
+                
+                if "two males yes" in response:
+                    for id in edit[url]['messages']:
+                        bot.edit_message_text(id, edit[url]['messages'][id], edit[url]['text'].replace("Можно ли двум мужчинам: ждем ответа", "Можно ли двум мужчинам: да"))
+                if "two males no" in response:
+                    for id in edit[url]['messages']:
+                        bot.edit_message_text(id, edit[url]['messages'][id], edit[url]['text'].replace("Можно ли двум мужчинам: ждем ответа", "Можно ли двум мужчинам: нет"))
+                if "animals yes" in response:
+                    for id in edit[url]['messages']:
+                        bot.edit_message_text(id, edit[url]['messages'][id], edit[url]['text'].replace("Можно ли с животными: ждем ответа", "Можно ли с животными: да"))
+                if "animals no" in response:
+                    for id in edit[url]['messages']:
+                        bot.edit_message_text(id, edit[url]['messages'][id], edit[url]['text'].replace("Можно ли с животными: ждем ответа", "Можно ли с животными: нет"))   
                 driver.find_element(By.XPATH, "/html/body/div[1]/div/div[2]/div[1]/div[4]/div[2]/div/textarea[1]").send_keys(response) 
                 
                 time.sleep(2)
@@ -409,7 +416,7 @@ if __name__ == "__main__":
     dialogues_keys = set(dialogues.keys())
     while True:
         for key in dialogues_keys:
-            if (key != '7494874190') and (key != '781665670'):
+            if (key == '7494874190'):
                 threading.Thread(target=chat_list_monitoring, args=(int(key),)).start()
         dialogues = load_dialogues()
         dialogues_keys = set(dialogues.keys()) - dialogues_keys
