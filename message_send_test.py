@@ -19,7 +19,7 @@ from telegrambot import load_parameters
 
 d = load_parameters()
 b = 1
-
+import pdb; pdb.set_trace()
 for i in list(d.values()):
     #print(len(list(d.values())))
     try:
@@ -27,7 +27,7 @@ for i in list(d.values()):
         bot.send_message(i['chat_id'], "test ")
     except Exception as e:
         #print(i['sex'])
-        b= b+1
+        b= i['chat_id']
         #print(e)
 
 print(b)

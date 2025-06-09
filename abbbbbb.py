@@ -338,7 +338,7 @@ import gc
 tracemalloc.start()
 while True:
     then = datetime.now()
-   # parse(2,10,room1=0,room2=0, no_room=True)    
+    parse(2,10,room1=0,room2=0, no_room=True)    
    # parse(2,10,room1=1,room2=1, no_room=False)    
     parse(5,25,room1=1,room2=1, room3=1)
     print(datetime.now() - then )
